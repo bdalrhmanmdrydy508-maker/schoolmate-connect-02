@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +52,15 @@ interface TeacherAssignment {
   };
 }
 
+interface Lesson {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string | null;
+  lesson_date: string;
+  created_at: string;
+}
+
 const BRANCHES_DATA: Record<string, { literary: string[]; scientific: string[] }> = {
   'الأولى ثانوي': {
     literary: ['آداب'],
@@ -93,7 +102,7 @@ const AdminDashboard = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   
-  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
@@ -101,6 +110,9 @@ const AdminDashboard = () => {
   const [newSectionName, setNewSectionName] = useState('');
   const [teacherId, setTeacherId] = useState('');
   const [selectedSubjectForAssignment, setSelectedSubjectForAssignment] = useState<Subject | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTeacherAssignment, setSelectedTeacherAssignment] = useState<TeacherAssignment | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isAddingSectionOpen, setIsAddingSectionOpen] = useState(false);
   const [isAssigningTeacher, setIsAssigningTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,6 +186,22 @@ const AdminDashboard = () => {
       .eq('section_id', sectionId);
     
     if (data) setAssignments(data as unknown as TeacherAssignment[]);
+  }, []);
+
+  const fetchLessons = useCallback(async (sectionId: string, teacherId: string) => {
+    const { data, error } = await supabase
+      .from('lessons')
+      .select('id, title, description, file_url, lesson_date, created_at')
+      .eq('section_id', sectionId)
+      .eq('teacher_id', teacherId)
+      .order('lesson_date', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching lessons:', error);
+      setLessons([]);
+    } else if (data) {
+      setLessons(data);
+    }
   }, []);
 
   useEffect(() => {
@@ -408,7 +436,12 @@ const AdminDashboard = () => {
   };
 
   const handleBack = () => {
-    if (currentView === 'section-detail') {
+    if (currentView === 'subject-lessons') {
+      setCurrentView('section-detail');
+      setSelectedSubject(null);
+      setSelectedTeacherAssignment(null);
+      setLessons([]);
+    } else if (currentView === 'section-detail') {
       setCurrentView('sections');
       setSelectedSection(null);
       setAssignments([]);
@@ -421,6 +454,13 @@ const AdminDashboard = () => {
       setSelectedLevel(null);
       setBranches([]);
     }
+  };
+
+  const handleSubjectClick = async (subject: Subject, assignment: TeacherAssignment) => {
+    setSelectedSubject(subject);
+    setSelectedTeacherAssignment(assignment);
+    setCurrentView('subject-lessons');
+    await fetchLessons(selectedSection!.id, assignment.teacher_id);
   };
 
   const getLevelIcon = (index: number) => {
@@ -513,7 +553,15 @@ const AdminDashboard = () => {
           {selectedSection && (
             <>
               <span className="mx-2">/</span>
-              <span className="text-foreground">{selectedSection.name}</span>
+              <span className={`${currentView !== 'section-detail' ? 'cursor-pointer hover:text-primary' : 'text-foreground'}`} onClick={() => currentView !== 'section-detail' && setCurrentView('section-detail')}>
+                {selectedSection.name}
+              </span>
+            </>
+          )}
+          {selectedSubject && (
+            <>
+              <span className="mx-2">/</span>
+              <span className="text-foreground">{selectedSubject.name}</span>
             </>
           )}
         </div>
@@ -760,6 +808,16 @@ const AdminDashboard = () => {
                             <span className="text-sm text-muted-foreground">الحالة:</span>
                             {getStatusBadge(assignment.status)}
                           </div>
+                          {assignment.status === 'accepted' && (
+                            <Button 
+                              variant="outline" 
+                              className="w-full mt-2"
+                              onClick={() => handleSubjectClick(subject, assignment)}
+                            >
+                              <BookOpen className="w-4 h-4 ml-2" />
+                              عرض الدروس
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <Dialog open={isAssigningTeacher && selectedSubjectForAssignment?.id === subject.id} onOpenChange={(open) => {
@@ -808,6 +866,99 @@ const AdminDashboard = () => {
                     </motion.div>
                   );
                 })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Subject Lessons View */}
+          {currentView === 'subject-lessons' && selectedSubject && selectedTeacherAssignment && (
+            <motion.div
+              key="subject-lessons"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              {/* Teacher Info Header */}
+              <div className="bg-card rounded-xl border border-border/50 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center">
+                    <Users className="w-7 h-7 text-primary-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{SUBJECT_ICONS[selectedSubject.name] || '📚'}</span>
+                      <h2 className="text-2xl font-bold">{selectedSubject.name}</h2>
+                    </div>
+                    <p className="text-muted-foreground mt-1">
+                      الأستاذ: <span className="font-semibold text-foreground">{selectedTeacherAssignment.teacher_profiles.full_name}</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedSection?.name} - {selectedBranch?.name} - {selectedLevel?.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lessons List */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  الدروس المرفوعة ({lessons.length})
+                </h3>
+                
+                {lessons.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {lessons.map((lesson, index) => (
+                      <motion.div
+                        key={lesson.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-6 h-6 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-lg truncate">{lesson.title}</h4>
+                            {lesson.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {lesson.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+                            </div>
+                            {lesson.file_url && (
+                              <a 
+                                href={lesson.file_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 mt-3 text-sm text-primary hover:underline"
+                              >
+                                <BookOpen className="w-4 h-4" />
+                                فتح الملف
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center py-16 bg-card rounded-xl border border-border/50"
+                  >
+                    <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground text-lg">لا توجد دروس مرفوعة بعد</p>
+                    <p className="text-muted-foreground/60 text-sm mt-1">الأستاذ لم يرفع أي درس لهذه المادة</p>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}
