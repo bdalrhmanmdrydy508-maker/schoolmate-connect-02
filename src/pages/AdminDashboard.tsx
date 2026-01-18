@@ -195,36 +195,61 @@ const AdminDashboard = () => {
   }, [selectedSection, fetchAssignments]);
 
   const getOrCreateBranch = async (branchName: string, levelId: string): Promise<Branch | null> => {
-    // First, try to find existing branch
-    const { data: existingBranch } = await supabase
-      .from('branches')
-      .select('*')
-      .eq('name', branchName)
-      .eq('level_id', levelId)
-      .maybeSingle();
-    
-    if (existingBranch) {
-      return existingBranch;
-    }
-
-    // Create new branch
-    const { data: newBranch, error } = await supabase
-      .from('branches')
-      .insert({ name: branchName, level_id: levelId })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error creating branch:', error);
-      toast({ title: 'خطأ', description: 'فشل إنشاء الشعبة', variant: 'destructive' });
+    // Validate levelId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(levelId)) {
+      console.error('Invalid level ID:', levelId);
+      toast({ title: 'خطأ', description: 'معرف المستوى غير صالح', variant: 'destructive' });
       return null;
     }
 
-    return newBranch;
+    try {
+      // First, try to find existing branch
+      const { data: existingBranch, error: fetchError } = await supabase
+        .from('branches')
+        .select('*')
+        .eq('name', branchName)
+        .eq('level_id', levelId)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error('Error fetching branch:', fetchError);
+      }
+      
+      if (existingBranch) {
+        return existingBranch;
+      }
+
+      // Create new branch
+      const { data: newBranch, error } = await supabase
+        .from('branches')
+        .insert({ name: branchName, level_id: levelId })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error creating branch:', error);
+        let errorMessage = 'فشل إنشاء الشعبة';
+        if (error.code === '42501') {
+          errorMessage = 'ليس لديك صلاحية لإنشاء الشعب';
+        }
+        toast({ title: 'خطأ', description: errorMessage, variant: 'destructive' });
+        return null;
+      }
+
+      return newBranch;
+    } catch (err) {
+      console.error('Unexpected error in getOrCreateBranch:', err);
+      toast({ title: 'خطأ', description: 'حدث خطأ غير متوقع', variant: 'destructive' });
+      return null;
+    }
   };
 
   const handleBranchSelect = async (branchName: string) => {
-    if (!selectedLevel) return;
+    if (!selectedLevel?.id) {
+      toast({ title: 'خطأ', description: 'لم يتم تحديد المستوى', variant: 'destructive' });
+      return;
+    }
     
     setIsLoading(true);
     const branch = await getOrCreateBranch(branchName, selectedLevel.id);
@@ -237,36 +262,69 @@ const AdminDashboard = () => {
   };
 
   const handleAddSection = async () => {
-    if (!selectedBranch || !newSectionName.trim()) {
+    const sectionName = newSectionName.trim();
+    
+    if (!sectionName) {
       toast({ title: 'تنبيه', description: 'يرجى إدخال اسم القسم', variant: 'destructive' });
+      return;
+    }
+
+    if (!selectedBranch?.id) {
+      toast({ title: 'خطأ', description: 'لم يتم تحديد الشعبة', variant: 'destructive' });
+      return;
+    }
+
+    // Validate that branch_id is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(selectedBranch.id)) {
+      console.error('Invalid branch ID:', selectedBranch.id);
+      toast({ title: 'خطأ', description: 'معرف الشعبة غير صالح، يرجى إعادة اختيار الشعبة', variant: 'destructive' });
+      return;
+    }
+
+    // Check for duplicate section name in the same branch
+    const existingSection = sections.find(s => s.name.toLowerCase() === sectionName.toLowerCase());
+    if (existingSection) {
+      toast({ title: 'تنبيه', description: 'يوجد قسم بهذا الاسم مسبقاً', variant: 'destructive' });
       return;
     }
 
     setIsLoading(true);
     
-    const { data, error } = await supabase
-      .from('sections')
-      .insert({ 
-        branch_id: selectedBranch.id, 
-        name: newSectionName.trim() 
-      })
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('sections')
+        .insert({ 
+          branch_id: selectedBranch.id, 
+          name: sectionName 
+        })
+        .select()
+        .single();
 
-    setIsLoading(false);
-
-    if (error) {
-      console.error('Error adding section:', error);
-      toast({ 
-        title: 'خطأ', 
-        description: error.message || 'فشل إضافة القسم', 
-        variant: 'destructive' 
-      });
-    } else if (data) {
-      toast({ title: 'تم بنجاح', description: 'تم إضافة القسم بنجاح' });
-      setSections(prev => [...prev, data]);
-      setNewSectionName('');
-      setIsAddingSectionOpen(false);
+      if (error) {
+        console.error('Error adding section:', error);
+        let errorMessage = 'فشل إضافة القسم';
+        
+        if (error.code === '23505') {
+          errorMessage = 'يوجد قسم بهذا الاسم مسبقاً';
+        } else if (error.code === '42501') {
+          errorMessage = 'ليس لديك صلاحية لإضافة أقسام';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        toast({ title: 'خطأ', description: errorMessage, variant: 'destructive' });
+      } else if (data) {
+        toast({ title: 'تم بنجاح', description: `تم إضافة القسم "${sectionName}" بنجاح` });
+        setSections(prev => [...prev, data]);
+        setNewSectionName('');
+        setIsAddingSectionOpen(false);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({ title: 'خطأ', description: 'حدث خطأ غير متوقع', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
