@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { AdminSettings } from '@/components/AdminSettings';
+import { SectionManagement } from '@/components/SectionManagement';
 
 interface AdminProfile {
   full_name: string;
@@ -116,6 +118,7 @@ const AdminDashboard = () => {
   const [isAddingSectionOpen, setIsAddingSectionOpen] = useState(false);
   const [isAssigningTeacher, setIsAssigningTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -456,6 +459,29 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleThemeChange = (theme: string) => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
+    } else {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+  };
+
+  const handleSectionUpdate = (updatedSection: Section) => {
+    setSections(prev => prev.map(s => s.id === updatedSection.id ? updatedSection : s));
+  };
+
+  const handleSectionDelete = (sectionId: string) => {
+    setSections(prev => prev.filter(s => s.id !== sectionId));
+  };
+
   const handleSubjectClick = async (subject: Subject, assignment: TeacherAssignment) => {
     setSelectedSubject(subject);
     setSelectedTeacherAssignment(assignment);
@@ -517,7 +543,7 @@ const AdminDashboard = () => {
             
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                 <Settings className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={signOut}>
@@ -527,6 +553,18 @@ const AdminDashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {showSettings && profile && (
+          <AdminSettings
+            profile={profile}
+            onClose={() => setShowSettings(false)}
+            onThemeChange={handleThemeChange}
+            onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Breadcrumb */}
       {currentView !== 'levels' && (
@@ -721,8 +759,15 @@ const AdminDashboard = () => {
                       setSelectedSection(section);
                       setCurrentView('section-detail');
                     }}
-                    className="notebook-card group"
+                    className="notebook-card group relative"
                   >
+                    {/* Section Management Buttons */}
+                    <SectionManagement
+                      section={section}
+                      onUpdate={handleSectionUpdate}
+                      onDelete={handleSectionDelete}
+                    />
+                    
                     {/* Notebook binding */}
                     <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-primary/30 to-transparent rounded-r-xl" />
                     <div className="absolute right-2 top-4 bottom-4 w-0.5 bg-primary/20" />

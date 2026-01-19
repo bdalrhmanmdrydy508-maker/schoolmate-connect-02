@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,12 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TeacherSettings } from '@/components/TeacherSettings';
+import { TeacherFiles } from '@/components/TeacherFiles';
 
 interface TeacherProfile {
   id: string;
   full_name: string;
   subject: string;
   teacher_id: string;
+  email: string | null;
+  phone: string | null;
 }
 
 interface Assignment {
@@ -45,6 +49,8 @@ const TeacherDashboard = () => {
   const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
@@ -73,11 +79,35 @@ const TeacherDashboard = () => {
     if (user) {
       const { data } = await supabase
         .from('teacher_profiles')
-        .select('id, full_name, subject, teacher_id')
+        .select('id, full_name, subject, teacher_id, email, phone')
         .eq('user_id', user.id)
         .single();
       
       if (data) setProfile(data);
+    }
+  };
+
+  const handleCopyId = async () => {
+    if (profile?.teacher_id) {
+      await navigator.clipboard.writeText(profile.teacher_id);
+      setCopiedId(true);
+      toast({ title: 'تم النسخ', description: 'تم نسخ معرف الأستاذ' });
+      setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
+  const handleThemeChange = (theme: string) => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
+    } else {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
     }
   };
 
@@ -177,9 +207,15 @@ const TeacherDashboard = () => {
                 </h1>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">{profile?.subject}</Badge>
-                  <span className="text-xs text-muted-foreground" dir="ltr">
-                    ID: {profile?.teacher_id}
-                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs font-mono"
+                    onClick={handleCopyId}
+                  >
+                    <span dir="ltr">ID: {profile?.teacher_id}</span>
+                    <Copy className={`w-3 h-3 mr-1 ${copiedId ? 'text-success' : ''}`} />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -194,7 +230,7 @@ const TeacherDashboard = () => {
                 </div>
               )}
               <ThemeToggle />
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
                 <Settings className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={signOut}>
@@ -204,6 +240,17 @@ const TeacherDashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {showSettings && profile && (
+          <TeacherSettings
+            profile={profile}
+            onClose={() => setShowSettings(false)}
+            onThemeChange={handleThemeChange}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -370,10 +417,7 @@ const TeacherDashboard = () => {
 
           {/* Files Tab */}
           <TabsContent value="files">
-            <div className="text-center py-12 text-muted-foreground">
-              <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>قريباً - إدارة الملفات</p>
-            </div>
+            {profile && <TeacherFiles profile={profile} />}
           </TabsContent>
 
           {/* Notifications Tab */}
