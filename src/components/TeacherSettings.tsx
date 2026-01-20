@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Copy, Check, Eye, EyeOff, Save, Moon, Sun, Monitor, Type, Globe } from 'lucide-react';
+import { X, Eye, EyeOff, Moon, Sun, Monitor, Type, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,6 @@ interface TeacherProfile {
   id: string;
   full_name: string;
   subject: string;
-  teacher_id: string;
   email: string | null;
   phone: string | null;
 }
@@ -32,9 +31,7 @@ interface TeacherSettingsProps {
 
 export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSettingsProps) => {
   const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -68,13 +65,6 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
     }
   };
 
-  const handleCopyId = async () => {
-    await navigator.clipboard.writeText(profile.teacher_id);
-    setCopied(true);
-    toast({ title: 'تم النسخ', description: 'تم نسخ معرف الأستاذ' });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       toast({ title: 'خطأ', description: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
@@ -95,7 +85,6 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
     } else {
       toast({ title: 'تم بنجاح', description: 'تم تغيير كلمة المرور' });
       setShowPasswordForm(false);
-      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -169,21 +158,6 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
               <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                 <span className="text-muted-foreground">المادة</span>
                 <span className="font-medium">{profile.subject}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                <span className="text-muted-foreground">معرف الأستاذ</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-medium" dir="ltr">{profile.teacher_id}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8"
-                    onClick={handleCopyId}
-                  >
-                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
               </div>
 
               {profile.email && (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, Copy } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, Heading2, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,6 @@ interface TeacherProfile {
   id: string;
   full_name: string;
   subject: string;
-  teacher_id: string;
   email: string | null;
   phone: string | null;
 }
@@ -50,13 +49,15 @@ const TeacherDashboard = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonDescription, setLessonDescription] = useState('');
   const [lessonDate, setLessonDate] = useState('');
+  const [lessonFile, setLessonFile] = useState<File | null>(null);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -79,20 +80,11 @@ const TeacherDashboard = () => {
     if (user) {
       const { data } = await supabase
         .from('teacher_profiles')
-        .select('id, full_name, subject, teacher_id, email, phone')
+        .select('id, full_name, subject, email, phone')
         .eq('user_id', user.id)
         .single();
       
       if (data) setProfile(data);
-    }
-  };
-
-  const handleCopyId = async () => {
-    if (profile?.teacher_id) {
-      await navigator.clipboard.writeText(profile.teacher_id);
-      setCopiedId(true);
-      toast({ title: 'تم النسخ', description: 'تم نسخ معرف الأستاذ' });
-      setTimeout(() => setCopiedId(false), 2000);
     }
   };
 
@@ -166,28 +158,78 @@ const TeacherDashboard = () => {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Accept PDF, images, and common document types
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: 'خطأ', description: 'نوع الملف غير مدعوم. الأنواع المدعومة: PDF, JPG, PNG, GIF, WEBP', variant: 'destructive' });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({ title: 'خطأ', description: 'حجم الملف يجب أن يكون أقل من 10 ميغابايت', variant: 'destructive' });
+        return;
+      }
+      setLessonFile(file);
+    }
+  };
+
   const handleAddLesson = async () => {
-    if (!selectedSection || !profile || !lessonTitle || !lessonDate) return;
+    if (!selectedSection || !profile || !lessonTitle || !lessonDate) {
+      toast({ title: 'تنبيه', description: 'يرجى ملء الحقول المطلوبة (العنوان والتاريخ)', variant: 'destructive' });
+      return;
+    }
 
-    const { error } = await supabase
-      .from('lessons')
-      .insert({
-        teacher_id: profile.id,
-        section_id: selectedSection.section_id,
-        title: lessonTitle,
-        description: lessonDescription,
-        lesson_date: lessonDate,
-      });
+    setIsUploading(true);
+    let fileUrl: string | null = null;
 
-    if (error) {
-      toast({ title: 'خطأ', description: 'فشل إضافة الدرس', variant: 'destructive' });
-    } else {
-      toast({ title: 'تم', description: 'تم إضافة الدرس بنجاح' });
+    try {
+      // Upload file if provided
+      if (lessonFile) {
+        const fileExt = lessonFile.name.split('.').pop();
+        const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('teacher-files')
+          .upload(fileName, lessonFile);
+
+        if (uploadError) {
+          throw new Error('فشل رفع الملف');
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('teacher-files')
+          .getPublicUrl(fileName);
+        
+        fileUrl = publicUrl;
+      }
+
+      // Insert lesson
+      const { error } = await supabase
+        .from('lessons')
+        .insert({
+          teacher_id: profile.id,
+          section_id: selectedSection.section_id,
+          title: lessonTitle,
+          description: lessonDescription,
+          lesson_date: lessonDate,
+          file_url: fileUrl,
+        });
+
+      if (error) throw error;
+
+      toast({ title: 'تم', description: 'تم إضافة الدرس/الحصة بنجاح' });
       setLessonTitle('');
       setLessonDescription('');
       setLessonDate('');
+      setLessonFile(null);
       setIsAddingLesson(false);
       fetchLessons();
+    } catch (error: any) {
+      toast({ title: 'خطأ', description: error.message || 'فشل إضافة الدرس', variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -205,18 +247,7 @@ const TeacherDashboard = () => {
                 <h1 className="text-xl font-bold text-foreground">
                   {profile?.full_name || 'الأستاذ'}
                 </h1>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{profile?.subject}</Badge>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-6 px-2 text-xs font-mono"
-                    onClick={handleCopyId}
-                  >
-                    <span dir="ltr">ID: {profile?.teacher_id}</span>
-                    <Copy className={`w-3 h-3 mr-1 ${copiedId ? 'text-success' : ''}`} />
-                  </Button>
-                </div>
+                <Badge variant="secondary">{profile?.subject}</Badge>
               </div>
             </div>
             
@@ -251,6 +282,45 @@ const TeacherDashboard = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Lesson Detail Modal */}
+      <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && setSelectedLesson(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{selectedLesson?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedLesson && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>{new Date(selectedLesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+              </div>
+              
+              {selectedLesson.description && (
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    {selectedLesson.description}
+                  </div>
+                </div>
+              )}
+              
+              {selectedLesson.file_url && (
+                <div className="pt-4 border-t">
+                  <a 
+                    href={selectedLesson.file_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    فتح ملف الدرس
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
@@ -326,40 +396,100 @@ const TeacherDashboard = () => {
                     <DialogTrigger asChild>
                       <Button className="h-24 flex-col gap-2 gradient-primary">
                         <Upload className="w-6 h-6" />
-                        رفع درس
+                        إضافة درس / حصة
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-lg">
                       <DialogHeader>
-                        <DialogTitle>إضافة درس جديد</DialogTitle>
+                        <DialogTitle>إضافة درس / حصة جديدة</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
+                      <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                         <div className="space-y-2">
-                          <Label>عنوان الدرس</Label>
+                          <Label className="flex items-center gap-2">
+                            <Heading1 className="w-4 h-4" />
+                            عنوان الدرس / الحصة *
+                          </Label>
                           <Input
                             value={lessonTitle}
                             onChange={(e) => setLessonTitle(e.target.value)}
-                            placeholder="أدخل عنوان الدرس"
+                            placeholder="مثال: الفصل الأول - المعادلات"
                           />
                         </div>
+                        
                         <div className="space-y-2">
-                          <Label>التاريخ</Label>
+                          <Label className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            تاريخ الحصة *
+                          </Label>
                           <Input
                             type="date"
                             value={lessonDate}
                             onChange={(e) => setLessonDate(e.target.value)}
                           />
                         </div>
+                        
                         <div className="space-y-2">
-                          <Label>الوصف (اختياري)</Label>
+                          <Label className="flex items-center gap-2">
+                            <List className="w-4 h-4" />
+                            محتوى الدرس (نص كامل مع عناوين فرعية)
+                          </Label>
                           <Textarea
                             value={lessonDescription}
                             onChange={(e) => setLessonDescription(e.target.value)}
-                            placeholder="وصف مختصر للدرس"
+                            placeholder={`أدخل محتوى الدرس هنا...
+
+يمكنك كتابة:
+• عناوين فرعية
+• فقرات مفصلة
+• نقاط مهمة
+• ملاحظات للتلاميذ`}
+                            className="min-h-[200px] resize-y"
                           />
                         </div>
-                        <Button onClick={handleAddLesson} className="w-full gradient-primary">
-                          إضافة الدرس
+                        
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <FileUp className="w-4 h-4" />
+                            ملف الدرس (PDF أو صورة) - اختياري
+                          </Label>
+                          <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                            <input
+                              type="file"
+                              accept=".pdf,image/*"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              id="lesson-file"
+                            />
+                            <label 
+                              htmlFor="lesson-file" 
+                              className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                              <FileUp className="w-8 h-8 text-muted-foreground" />
+                              {lessonFile ? (
+                                <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">اضغط لاختيار ملف</span>
+                              )}
+                            </label>
+                          </div>
+                          {lessonFile && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setLessonFile(null)}
+                              className="text-destructive"
+                            >
+                              إزالة الملف
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <Button 
+                          onClick={handleAddLesson} 
+                          className="w-full gradient-primary"
+                          disabled={isUploading || !lessonTitle || !lessonDate}
+                        >
+                          {isUploading ? 'جاري الرفع...' : 'إضافة الدرس'}
                         </Button>
                       </div>
                     </DialogContent>
@@ -383,7 +513,7 @@ const TeacherDashboard = () => {
 
                 {/* Lessons list */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold">الدروس المرفوعة</h3>
+                  <h3 className="font-semibold">الدروس والحصص</h3>
                   {lessons.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
                       لا توجد دروس بعد
@@ -391,9 +521,11 @@ const TeacherDashboard = () => {
                   ) : (
                     <div className="space-y-3">
                       {lessons.map((lesson) => (
-                        <div
+                        <motion.button
                           key={lesson.id}
-                          className="p-4 rounded-lg bg-card border border-border/50"
+                          onClick={() => setSelectedLesson(lesson)}
+                          className="w-full p-4 rounded-lg bg-card border border-border/50 text-right hover:border-primary transition-colors"
+                          whileHover={{ scale: 1.01 }}
                         >
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold">{lesson.title}</h4>
@@ -402,11 +534,19 @@ const TeacherDashboard = () => {
                             </span>
                           </div>
                           {lesson.description && (
-                            <p className="text-sm text-muted-foreground mt-2">
+                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                               {lesson.description}
                             </p>
                           )}
-                        </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            {lesson.file_url && (
+                              <Badge variant="outline" className="text-xs">
+                                <FileText className="w-3 h-3 ml-1" />
+                                ملف مرفق
+                              </Badge>
+                            )}
+                          </div>
+                        </motion.button>
                       ))}
                     </div>
                   )}
@@ -452,17 +592,18 @@ const TeacherDashboard = () => {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            className="bg-success hover:bg-success/90"
-                            onClick={() => handleAssignmentResponse(assignment.id, true)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
+                            variant="outline"
+                            className="text-destructive border-destructive/30"
                             onClick={() => handleAssignmentResponse(assignment.id, false)}
                           >
                             <X className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => handleAssignmentResponse(assignment.id, true)}
+                          >
+                            <Check className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
