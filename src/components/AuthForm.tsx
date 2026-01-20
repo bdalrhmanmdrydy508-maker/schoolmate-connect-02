@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, Hash } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,10 +62,6 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     institutionName: '',
     subject: '',
   });
-
-  const generateTeacherId = () => {
-    return 'T' + Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -173,7 +169,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               console.error('Error inserting admin profile:', profileError);
             }
           } else {
-            const teacherId = generateTeacherId();
+            // Teacher profile without teacher_id generation
             const { error: profileError } = await supabase
               .from('teacher_profiles')
               .insert({
@@ -181,7 +177,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
                 full_name: formData.fullName,
                 email: formData.email,
                 subject: formData.subject,
-                teacher_id: teacherId,
+                teacher_id: authData.user.id.substring(0, 8).toUpperCase(), // Use first 8 chars of user UUID as fallback
               });
 
             if (profileError) {

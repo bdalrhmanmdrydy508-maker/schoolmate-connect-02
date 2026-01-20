@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminSettings } from '@/components/AdminSettings';
 import { SectionManagement } from '@/components/SectionManagement';
 
@@ -42,6 +43,13 @@ interface Subject {
   name: string;
 }
 
+interface TeacherProfile {
+  id: string;
+  full_name: string;
+  email: string | null;
+  subject: string;
+}
+
 interface TeacherAssignment {
   id: string;
   teacher_id: string;
@@ -50,7 +58,6 @@ interface TeacherAssignment {
   status: string;
   teacher_profiles: {
     full_name: string;
-    teacher_id: string;
   };
 }
 
@@ -103,6 +110,7 @@ const AdminDashboard = () => {
   const [sections, setSections] = useState<Section[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
+  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
   const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
@@ -110,11 +118,13 @@ const AdminDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   
   const [newSectionName, setNewSectionName] = useState('');
-  const [teacherId, setTeacherId] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
   const [selectedSubjectForAssignment, setSelectedSubjectForAssignment] = useState<Subject | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedTeacherAssignment, setSelectedTeacherAssignment] = useState<TeacherAssignment | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isAddingSectionOpen, setIsAddingSectionOpen] = useState(false);
   const [isAssigningTeacher, setIsAssigningTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,6 +134,7 @@ const AdminDashboard = () => {
     fetchProfile();
     fetchLevels();
     fetchSubjects();
+    fetchTeachers();
   }, []);
 
   const fetchProfile = async () => {
@@ -172,6 +183,15 @@ const AdminDashboard = () => {
     if (data) setSubjects(data);
   };
 
+  const fetchTeachers = async () => {
+    const { data } = await supabase
+      .from('teacher_profiles')
+      .select('id, full_name, email, subject')
+      .order('full_name');
+    
+    if (data) setTeachers(data);
+  };
+
   const fetchAssignments = useCallback(async (sectionId: string) => {
     const { data } = await supabase
       .from('teacher_assignments')
@@ -182,8 +202,7 @@ const AdminDashboard = () => {
         section_id,
         status,
         teacher_profiles!inner (
-          full_name,
-          teacher_id
+          full_name
         )
       `)
       .eq('section_id', sectionId);
@@ -226,7 +245,6 @@ const AdminDashboard = () => {
   }, [selectedSection, fetchAssignments]);
 
   const getOrCreateBranch = async (branchName: string, levelId: string): Promise<Branch | null> => {
-    // Validate levelId is a valid UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(levelId)) {
       console.error('Invalid level ID:', levelId);
@@ -235,7 +253,6 @@ const AdminDashboard = () => {
     }
 
     try {
-      // First, try to find existing branch
       const { data: existingBranch, error: fetchError } = await supabase
         .from('branches')
         .select('*')
@@ -251,7 +268,6 @@ const AdminDashboard = () => {
         return existingBranch;
       }
 
-      // Create new branch
       const { data: newBranch, error } = await supabase
         .from('branches')
         .insert({ name: branchName, level_id: levelId })
@@ -305,7 +321,6 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Validate that branch_id is a valid UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(selectedBranch.id)) {
       console.error('Invalid branch ID:', selectedBranch.id);
@@ -313,7 +328,6 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Check for duplicate section name in the same branch
     const existingSection = sections.find(s => s.name.toLowerCase() === sectionName.toLowerCase());
     if (existingSection) {
       toast({ title: 'تنبيه', description: 'يوجد قسم بهذا الاسم مسبقاً', variant: 'destructive' });
@@ -360,25 +374,12 @@ const AdminDashboard = () => {
   };
 
   const handleAssignTeacher = async () => {
-    if (!selectedSection || !selectedSubjectForAssignment || !teacherId.trim()) {
-      toast({ title: 'تنبيه', description: 'يرجى إدخال معرف الأستاذ', variant: 'destructive' });
+    if (!selectedSection || !selectedSubjectForAssignment || !selectedTeacherId) {
+      toast({ title: 'تنبيه', description: 'يرجى اختيار الأستاذ', variant: 'destructive' });
       return;
     }
 
     setIsLoading(true);
-
-    // Find teacher by teacher_id
-    const { data: teacher, error: teacherError } = await supabase
-      .from('teacher_profiles')
-      .select('id')
-      .eq('teacher_id', teacherId.trim())
-      .maybeSingle();
-
-    if (teacherError || !teacher) {
-      setIsLoading(false);
-      toast({ title: 'خطأ', description: 'لم يتم العثور على أستاذ بهذا المعرف', variant: 'destructive' });
-      return;
-    }
 
     // Check if assignment already exists
     const { data: existingAssignment } = await supabase
@@ -417,7 +418,7 @@ const AdminDashboard = () => {
     const { error } = await supabase
       .from('teacher_assignments')
       .insert({
-        teacher_id: teacher.id,
+        teacher_id: selectedTeacherId,
         section_id: selectedSection.id,
         subject_id: selectedSubjectForAssignment.id,
         admin_id: adminProfile.id,
@@ -432,7 +433,8 @@ const AdminDashboard = () => {
     } else {
       toast({ title: 'تم بنجاح', description: 'تم إرسال طلب الإسناد للأستاذ' });
       fetchAssignments(selectedSection.id);
-      setTeacherId('');
+      setSelectedTeacherId('');
+      setTeacherSearchQuery('');
       setIsAssigningTeacher(false);
       setSelectedSubjectForAssignment(null);
     }
@@ -444,6 +446,7 @@ const AdminDashboard = () => {
       setSelectedSubject(null);
       setSelectedTeacherAssignment(null);
       setLessons([]);
+      setSelectedLesson(null);
     } else if (currentView === 'section-detail') {
       setCurrentView('sections');
       setSelectedSection(null);
@@ -511,6 +514,13 @@ const AdminDashboard = () => {
     }
   };
 
+  // Filter teachers based on search query
+  const filteredTeachers = teachers.filter(teacher => 
+    teacher.full_name.toLowerCase().includes(teacherSearchQuery.toLowerCase()) ||
+    teacher.email?.toLowerCase().includes(teacherSearchQuery.toLowerCase()) ||
+    teacher.subject.toLowerCase().includes(teacherSearchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -565,6 +575,45 @@ const AdminDashboard = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Lesson Detail Modal */}
+      <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && setSelectedLesson(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{selectedLesson?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedLesson && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>{new Date(selectedLesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+              </div>
+              
+              {selectedLesson.description && (
+                <div className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    {selectedLesson.description}
+                  </div>
+                </div>
+              )}
+              
+              {selectedLesson.file_url && (
+                <div className="pt-4 border-t">
+                  <a 
+                    href={selectedLesson.file_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    فتح ملف الدرس
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Breadcrumb */}
       {currentView !== 'levels' && (
@@ -867,7 +916,11 @@ const AdminDashboard = () => {
                       ) : (
                         <Dialog open={isAssigningTeacher && selectedSubjectForAssignment?.id === subject.id} onOpenChange={(open) => {
                           setIsAssigningTeacher(open);
-                          if (!open) setSelectedSubjectForAssignment(null);
+                          if (!open) {
+                            setSelectedSubjectForAssignment(null);
+                            setSelectedTeacherId('');
+                            setTeacherSearchQuery('');
+                          }
                         }}>
                           <DialogTrigger asChild>
                             <Button 
@@ -885,24 +938,49 @@ const AdminDashboard = () => {
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
-                                <Label>معرف الأستاذ (ID)</Label>
-                                <Input
-                                  value={teacherId}
-                                  onChange={(e) => setTeacherId(e.target.value)}
-                                  placeholder="مثال: T1A2B3"
-                                  dir="ltr"
-                                  onKeyDown={(e) => e.key === 'Enter' && handleAssignTeacher()}
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                  أدخل معرف الأستاذ لإرسال طلب الإسناد
-                                </p>
+                                <Label>اختر الأستاذ</Label>
+                                <div className="relative">
+                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                  <Input
+                                    value={teacherSearchQuery}
+                                    onChange={(e) => setTeacherSearchQuery(e.target.value)}
+                                    placeholder="ابحث عن الأستاذ بالاسم أو البريد..."
+                                    className="pr-10"
+                                  />
+                                </div>
                               </div>
+                              
+                              <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-2">
+                                {filteredTeachers.length === 0 ? (
+                                  <p className="text-center text-muted-foreground py-4">
+                                    لا يوجد أساتذة مسجلين
+                                  </p>
+                                ) : (
+                                  filteredTeachers.map((teacher) => (
+                                    <button
+                                      key={teacher.id}
+                                      onClick={() => setSelectedTeacherId(teacher.id)}
+                                      className={`w-full p-3 rounded-lg text-right transition-colors ${
+                                        selectedTeacherId === teacher.id 
+                                          ? 'bg-primary text-primary-foreground' 
+                                          : 'bg-secondary/50 hover:bg-secondary'
+                                      }`}
+                                    >
+                                      <div className="font-medium">{teacher.full_name}</div>
+                                      <div className="text-sm opacity-80">
+                                        {teacher.subject} {teacher.email && `• ${teacher.email}`}
+                                      </div>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                              
                               <Button 
                                 onClick={handleAssignTeacher} 
                                 className="w-full gradient-primary"
-                                disabled={isLoading || !teacherId.trim()}
+                                disabled={isLoading || !selectedTeacherId}
                               >
-                                {isLoading ? 'جاري الإرسال...' : 'إرسال الطلب'}
+                                {isLoading ? 'جاري الإرسال...' : 'إرسال طلب الإسناد'}
                               </Button>
                             </div>
                           </DialogContent>
@@ -949,18 +1027,19 @@ const AdminDashboard = () => {
               <div className="space-y-4">
                 <h3 className="text-xl font-bold flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  الدروس المرفوعة ({lessons.length})
+                  الدروس والحصص ({lessons.length})
                 </h3>
                 
                 {lessons.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {lessons.map((lesson, index) => (
-                      <motion.div
+                      <motion.button
                         key={lesson.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all"
+                        onClick={() => setSelectedLesson(lesson)}
+                        className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all text-right"
                       >
                         <div className="flex items-start gap-4">
                           <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -978,19 +1057,14 @@ const AdminDashboard = () => {
                               <span>{new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
                             </div>
                             {lesson.file_url && (
-                              <a 
-                                href={lesson.file_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 mt-3 text-sm text-primary hover:underline"
-                              >
-                                <BookOpen className="w-4 h-4" />
-                                فتح الملف
-                              </a>
+                              <Badge variant="outline" className="mt-2 text-xs">
+                                <FileText className="w-3 h-3 ml-1" />
+                                ملف مرفق
+                              </Badge>
                             )}
                           </div>
                         </div>
-                      </motion.div>
+                      </motion.button>
                     ))}
                   </div>
                 ) : (
