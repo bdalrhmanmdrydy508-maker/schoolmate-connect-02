@@ -35,6 +35,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   const [fullName, setFullName] = useState(profile.full_name);
   const [institutionName, setInstitutionName] = useState(profile.institution_name);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +94,11 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast({ title: 'خطأ', description: 'يرجى إدخال كلمة المرور الحالية', variant: 'destructive' });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({ title: 'خطأ', description: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
       return;
@@ -104,6 +110,26 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
     }
 
     setIsLoading(true);
+    
+    // Verify current password by re-authenticating
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      setIsLoading(false);
+      toast({ title: 'خطأ', description: 'لم يتم العثور على بيانات المستخدم', variant: 'destructive' });
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      setIsLoading(false);
+      toast({ title: 'خطأ', description: 'كلمة المرور الحالية غير صحيحة', variant: 'destructive' });
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsLoading(false);
 
@@ -112,6 +138,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
     } else {
       toast({ title: 'تم بنجاح', description: 'تم تغيير كلمة المرور' });
       setShowPasswordForm(false);
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -262,6 +289,16 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
             ) : (
               <div className="space-y-3 p-4 bg-secondary/20 rounded-lg">
                 <div className="space-y-2">
+                  <Label>كلمة المرور الحالية</Label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور الحالية"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label>كلمة المرور الجديدة</Label>
                   <Input
                     type="password"
@@ -284,14 +321,19 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleChangePassword} 
-                    disabled={isLoading}
+                    disabled={isLoading || !currentPassword}
                     className="flex-1"
                   >
                     {isLoading ? 'جاري الحفظ...' : 'حفظ'}
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => setShowPasswordForm(false)}
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setCurrentPassword('');
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
                   >
                     إلغاء
                   </Button>

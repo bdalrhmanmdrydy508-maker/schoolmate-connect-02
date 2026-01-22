@@ -32,6 +32,7 @@ interface TeacherSettingsProps {
 export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSettingsProps) => {
   const { toast } = useToast();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +67,11 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast({ title: 'خطأ', description: 'يرجى إدخال كلمة المرور الحالية', variant: 'destructive' });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({ title: 'خطأ', description: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
       return;
@@ -77,6 +83,26 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
     }
 
     setIsLoading(true);
+    
+    // Verify current password by re-authenticating
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      setIsLoading(false);
+      toast({ title: 'خطأ', description: 'لم يتم العثور على بيانات المستخدم', variant: 'destructive' });
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      setIsLoading(false);
+      toast({ title: 'خطأ', description: 'كلمة المرور الحالية غير صحيحة', variant: 'destructive' });
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsLoading(false);
 
@@ -85,6 +111,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
     } else {
       toast({ title: 'تم بنجاح', description: 'تم تغيير كلمة المرور' });
       setShowPasswordForm(false);
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -193,13 +220,13 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
             ) : (
               <div className="space-y-3 p-4 bg-secondary/20 rounded-lg">
                 <div className="space-y-2">
-                  <Label>كلمة المرور الجديدة</Label>
+                  <Label>كلمة المرور الحالية</Label>
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="أدخل كلمة المرور الجديدة"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="أدخل كلمة المرور الحالية"
                     />
                     <Button
                       type="button"
@@ -211,6 +238,16 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>كلمة المرور الجديدة</Label>
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور الجديدة"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -226,14 +263,19 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange }: TeacherSett
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleChangePassword} 
-                    disabled={isLoading}
+                    disabled={isLoading || !currentPassword}
                     className="flex-1"
                   >
                     {isLoading ? 'جاري الحفظ...' : 'حفظ'}
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => setShowPasswordForm(false)}
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setCurrentPassword('');
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
                   >
                     إلغاء
                   </Button>
