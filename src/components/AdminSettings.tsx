@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Save, Moon, Sun, Monitor, Type, Globe, Pencil } from 'lucide-react';
+import { X, Save, Moon, Sun, Monitor, Type, Globe, Pencil, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ interface AdminProfile {
   full_name: string;
   institution_name: string;
   email?: string;
+  last_profile_update?: string | null;
 }
 
 interface UserSettings {
@@ -39,15 +40,50 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastProfileUpdate, setLastProfileUpdate] = useState<string | null>(null);
   const [settings, setSettings] = useState<UserSettings>({
     language: 'ar',
     font_size: 'medium',
     theme: 'system',
   });
 
+  const EDIT_COOLDOWN_DAYS = 60;
+
+  // Calculate days remaining until next edit is allowed
+  const getDaysRemaining = () => {
+    if (!lastProfileUpdate) return 0;
+    const lastUpdate = new Date(lastProfileUpdate);
+    const now = new Date();
+    const diffTime = now.getTime() - lastUpdate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const remaining = EDIT_COOLDOWN_DAYS - diffDays;
+    return remaining > 0 ? remaining : 0;
+  };
+
+  const canEditProfile = () => {
+    if (!lastProfileUpdate) return true;
+    return getDaysRemaining() === 0;
+  };
+
   useEffect(() => {
     fetchSettings();
+    fetchLastProfileUpdate();
   }, []);
+
+  const fetchLastProfileUpdate = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from('admin_profiles')
+        .select('last_profile_update')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data?.last_profile_update) {
+        setLastProfileUpdate(data.last_profile_update);
+      }
+    }
+  };
 
   const fetchSettings = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -69,16 +105,27 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   };
 
   const handleSaveProfile = async () => {
+    if (!canEditProfile()) {
+      toast({ 
+        title: 'غير مسموح', 
+        description: `يمكنك تعديل البيانات بعد ${getDaysRemaining()} يوم`, 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     setIsLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     
     if (user) {
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('admin_profiles')
         .update({
           full_name: fullName,
           institution_name: institutionName,
-          updated_at: new Date().toISOString(),
+          updated_at: now,
+          last_profile_update: now,
         })
         .eq('user_id', user.id);
 
@@ -86,6 +133,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
         toast({ title: 'خطأ', description: 'فشل حفظ البيانات', variant: 'destructive' });
       } else {
         toast({ title: 'تم بنجاح', description: 'تم حفظ البيانات' });
+        setLastProfileUpdate(now);
         onProfileUpdate({ ...profile, full_name: fullName, institution_name: institutionName });
         setEditMode(false);
       }
@@ -204,12 +252,30 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-lg">معلومات الحساب</h3>
               {!editMode && (
-                <Button variant="ghost" size="sm" onClick={() => setEditMode(true)}>
-                  <Pencil className="w-4 h-4 ml-2" />
-                  تعديل
-                </Button>
+                canEditProfile() ? (
+                  <Button variant="ghost" size="sm" onClick={() => setEditMode(true)}>
+                    <Pencil className="w-4 h-4 ml-2" />
+                    تعديل
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Lock className="w-4 h-4" />
+                    <span>التعديل متاح بعد {getDaysRemaining()} يوم</span>
+                  </div>
+                )
               )}
             </div>
+
+            {/* Restriction notice */}
+            {!canEditProfile() && !editMode && (
+              <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-600 dark:text-amber-400">تعديل البيانات مقيّد</p>
+                  <p className="text-muted-foreground">يُسمح بتعديل البيانات الشخصية مرة واحدة كل 60 يوماً. متبقي {getDaysRemaining()} يوم.</p>
+                </div>
+              </div>
+            )}
             
             {editMode ? (
               <div className="space-y-3 p-4 bg-secondary/20 rounded-lg">

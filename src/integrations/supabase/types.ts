@@ -21,6 +21,7 @@ export type Database = {
           full_name: string
           id: string
           institution_name: string
+          last_profile_update: string | null
           updated_at: string
           user_id: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           full_name: string
           id?: string
           institution_name: string
+          last_profile_update?: string | null
           updated_at?: string
           user_id: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           full_name?: string
           id?: string
           institution_name?: string
+          last_profile_update?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -302,6 +305,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          last_profile_update: string | null
           phone: string | null
           subject: string
           teacher_id: string
@@ -313,6 +317,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          last_profile_update?: string | null
           phone?: string | null
           subject: string
           teacher_id: string
@@ -324,6 +329,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          last_profile_update?: string | null
           phone?: string | null
           subject?: string
           teacher_id?: string
