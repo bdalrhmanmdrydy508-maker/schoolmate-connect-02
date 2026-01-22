@@ -1,22 +1,14 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import RoleSelection from './RoleSelection';
 import AdminDashboard from './AdminDashboard';
 import TeacherDashboard from './TeacherDashboard';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const Index = () => {
   const { user, role, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center gradient-hero">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary-foreground mx-auto mb-4" />
-          <p className="text-primary-foreground/80">جاري التحميل...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   // Not logged in - show role selection
