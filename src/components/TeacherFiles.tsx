@@ -73,38 +73,64 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
       try {
         // Get user ID for folder structure
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
+        if (!user) throw new Error('المستخدم غير مسجل الدخول');
 
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        // Validate file size (max 50MB)
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+          throw new Error('حجم الملف يجب أن يكون أقل من 50 ميجابايت');
+        }
+
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file';
+        const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const fileName = `${uniqueId}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
+        // Upload to storage with content type
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('teacher-files')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type || 'application/octet-stream'
+          });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          throw new Error(uploadError.message || 'فشل رفع الملف للتخزين');
+        }
 
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        const { data: urlData } = supabase.storage
           .from('teacher-files')
           .getPublicUrl(filePath);
 
-        // Save metadata
+        if (!urlData?.publicUrl) {
+          throw new Error('فشل الحصول على رابط الملف');
+        }
+
+        // Save metadata to database
         const { error: dbError } = await supabase
           .from('teacher_files')
           .insert({
             teacher_id: profile.id,
             file_name: file.name,
-            file_url: publicUrl,
+            file_url: urlData.publicUrl,
             file_size: file.size,
-            file_type: file.type,
+            file_type: file.type || 'application/octet-stream',
           });
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          console.error('Database insert error:', dbError);
+          // Try to clean up uploaded file
+          await supabase.storage.from('teacher-files').remove([filePath]);
+          throw new Error(dbError.message || 'فشل حفظ بيانات الملف');
+        }
 
-        toast({ title: 'تم الرفع', description: `تم رفع ${file.name} بنجاح` });
+        toast({ 
+          title: 'تم الرفع بنجاح ✓', 
+          description: `تم رفع "${file.name}" بنجاح` 
+        });
       } catch (error: any) {
         console.error('Upload error:', error);
         toast({ 
@@ -116,7 +142,7 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
     }
 
     setIsUploading(false);
-    fetchFiles();
+    await fetchFiles();
     
     // Reset input
     if (fileInputRef.current) {
@@ -168,11 +194,11 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
   };
 
   const getFileIcon = (fileType: string | null) => {
-    if (!fileType) return <File className="w-6 h-6" />;
-    if (fileType.startsWith('image/')) return <Image className="w-6 h-6 text-green-500" />;
-    if (fileType === 'application/pdf') return <FileText className="w-6 h-6 text-red-500" />;
-    if (fileType.includes('zip') || fileType.includes('rar')) return <FileArchive className="w-6 h-6 text-yellow-500" />;
-    return <File className="w-6 h-6 text-blue-500" />;
+    if (!fileType) return <File className="w-6 h-6 text-muted-foreground" />;
+    if (fileType.startsWith('image/')) return <Image className="w-6 h-6 text-primary" />;
+    if (fileType === 'application/pdf') return <FileText className="w-6 h-6 text-destructive" />;
+    if (fileType.includes('zip') || fileType.includes('rar')) return <FileArchive className="w-6 h-6 text-accent-foreground" />;
+    return <File className="w-6 h-6 text-secondary-foreground" />;
   };
 
   const formatFileSize = (bytes: number | null) => {
