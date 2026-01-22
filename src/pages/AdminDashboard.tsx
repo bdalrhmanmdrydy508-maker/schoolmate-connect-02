@@ -514,12 +514,12 @@ const AdminDashboard = () => {
     }
   };
 
-  // Filter teachers based on search query
-  const filteredTeachers = teachers.filter(teacher => 
-    teacher.full_name.toLowerCase().includes(teacherSearchQuery.toLowerCase()) ||
-    teacher.email?.toLowerCase().includes(teacherSearchQuery.toLowerCase()) ||
-    teacher.subject.toLowerCase().includes(teacherSearchQuery.toLowerCase())
-  );
+  // Filter teachers based on search query - only show results when user types
+  const filteredTeachers = teacherSearchQuery.trim() 
+    ? teachers.filter(teacher => 
+        teacher.full_name.toLowerCase().includes(teacherSearchQuery.toLowerCase())
+      )
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -950,30 +950,39 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               
-                              <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-2">
-                                {filteredTeachers.length === 0 ? (
-                                  <p className="text-center text-muted-foreground py-4">
-                                    لا يوجد أساتذة مسجلين
-                                  </p>
-                                ) : (
-                                  filteredTeachers.map((teacher) => (
-                                    <button
-                                      key={teacher.id}
-                                      onClick={() => setSelectedTeacherId(teacher.id)}
-                                      className={`w-full p-3 rounded-lg text-right transition-colors ${
-                                        selectedTeacherId === teacher.id 
-                                          ? 'bg-primary text-primary-foreground' 
-                                          : 'bg-secondary/50 hover:bg-secondary'
-                                      }`}
-                                    >
-                                      <div className="font-medium">{teacher.full_name}</div>
-                                      <div className="text-sm opacity-80">
-                                        {teacher.subject} {teacher.email && `• ${teacher.email}`}
-                                      </div>
-                                    </button>
-                                  ))
-                                )}
-                              </div>
+                              {teacherSearchQuery.trim() ? (
+                                <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-2">
+                                  {filteredTeachers.length === 0 ? (
+                                    <p className="text-center text-muted-foreground py-4">
+                                      لا يوجد أساتذة بهذا الاسم
+                                    </p>
+                                  ) : (
+                                    filteredTeachers.map((teacher) => (
+                                      <button
+                                        key={teacher.id}
+                                        onClick={() => {
+                                          setSelectedTeacherId(teacher.id);
+                                          setTeacherSearchQuery(teacher.full_name);
+                                        }}
+                                        className={`w-full p-3 rounded-lg text-right transition-colors ${
+                                          selectedTeacherId === teacher.id 
+                                            ? 'bg-primary text-primary-foreground' 
+                                            : 'bg-secondary/50 hover:bg-secondary'
+                                        }`}
+                                      >
+                                        <div className="font-medium">{teacher.full_name}</div>
+                                        <div className="text-sm opacity-80">
+                                          {teacher.subject} {teacher.email && `• ${teacher.email}`}
+                                        </div>
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-center text-muted-foreground py-4 border rounded-lg">
+                                  ابدأ بكتابة اسم الأستاذ للبحث
+                                </p>
+                              )}
                               
                               <Button 
                                 onClick={handleAssignTeacher} 
