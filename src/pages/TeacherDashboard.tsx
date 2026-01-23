@@ -161,14 +161,16 @@ const TeacherDashboard = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Accept PDF, images, and common document types
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({ title: 'خطأ', description: 'نوع الملف غير مدعوم. الأنواع المدعومة: PDF, JPG, PNG, GIF, WEBP', variant: 'destructive' });
+      // Support all common file types
+      const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'zip', 'rar'];
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      
+      if (!allowedExtensions.includes(ext)) {
+        toast({ title: 'خطأ', description: 'نوع الملف غير مدعوم', variant: 'destructive' });
         return;
       }
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({ title: 'خطأ', description: 'حجم الملف يجب أن يكون أقل من 10 ميغابايت', variant: 'destructive' });
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        toast({ title: 'خطأ', description: 'حجم الملف يجب أن يكون أقل من 50 ميغابايت', variant: 'destructive' });
         return;
       }
       setLessonFile(file);
@@ -450,12 +452,12 @@ const TeacherDashboard = () => {
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <FileUp className="w-4 h-4" />
-                            ملف الدرس (PDF أو صورة) - اختياري
+                            ملف الدرس (جميع الصيغ) - اختياري
                           </Label>
                           <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                             <input
                               type="file"
-                              accept=".pdf,image/*"
+                              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
                               onChange={handleFileChange}
                               className="hidden"
                               id="lesson-file"

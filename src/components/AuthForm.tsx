@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { z } from 'zod';
 
 const SUBJECTS = [
@@ -52,7 +53,9 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [roleError, setRoleError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { validateRoleForLogin } = useAuth();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -66,15 +69,18 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
+    setRoleError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    setRoleError(null);
 
     try {
       if (isLogin) {
+        // Validate form data
         const result = loginSchema.safeParse(formData);
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
@@ -86,17 +92,19 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           return;
         }
 
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
+        // Use the new role validation method
+        const validation = await validateRoleForLogin(
+          formData.email,
+          formData.password,
+          role
+        );
 
-        if (error) {
+        if (!validation.success) {
+          // Set role-specific error message
+          setRoleError(validation.error || 'فشل تسجيل الدخول');
           toast({
-            title: 'خطأ في تسجيل الدخول',
-            description: error.message === 'Invalid login credentials' 
-              ? 'البريد الإلكتروني أو كلمة السر غير صحيحة' 
-              : error.message,
+            title: role === 'admin' ? 'فشل تسجيل دخول المدير' : 'فشل تسجيل دخول الأستاذ',
+            description: validation.error,
             variant: 'destructive',
           });
           setLoading(false);
@@ -105,10 +113,11 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
         toast({
           title: 'تم تسجيل الدخول بنجاح',
-          description: 'جاري التوجيه...',
+          description: 'جاري التوجيه إلى لوحة التحكم...',
         });
+
       } else {
-        // Sign up
+        // Sign up flow
         const schema = role === 'admin' ? adminSchema : teacherSchema;
         const result = schema.safeParse(formData);
         
@@ -136,7 +145,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           toast({
             title: 'خطأ في إنشاء الحساب',
             description: signUpError.message === 'User already registered'
-              ? 'البريد الإلكتروني مسجل مسبقاً'
+              ? 'البريد الإلكتروني مسجل مسبقاً - جرب تسجيل الدخول بدلاً من ذلك'
               : signUpError.message,
             variant: 'destructive',
           });
@@ -145,13 +154,22 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         }
 
         if (authData.user) {
-          // Insert role
+          // Insert role - This permanently binds the account to this role
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert({ user_id: authData.user.id, role });
 
           if (roleError) {
             console.error('Error inserting role:', roleError);
+            // If role insertion fails, we should sign out and notify user
+            await supabase.auth.signOut();
+            toast({
+              title: 'خطأ',
+              description: 'فشل إنشاء الحساب - يرجى المحاولة مرة أخرى',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
           }
 
           // Insert profile based on role
@@ -169,7 +187,6 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               console.error('Error inserting admin profile:', profileError);
             }
           } else {
-            // Teacher profile without teacher_id generation
             const { error: profileError } = await supabase
               .from('teacher_profiles')
               .insert({
@@ -177,7 +194,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
                 full_name: formData.fullName,
                 email: formData.email,
                 subject: formData.subject,
-                teacher_id: authData.user.id.substring(0, 8).toUpperCase(), // Use first 8 chars of user UUID as fallback
+                teacher_id: authData.user.id.substring(0, 8).toUpperCase(),
               });
 
             if (profileError) {
@@ -187,7 +204,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
           toast({
             title: 'تم إنشاء الحساب بنجاح',
-            description: 'جاري التوجيه إلى لوحة التحكم...',
+            description: `تم تسجيلك كـ${role === 'admin' ? 'مدير' : 'أستاذ'} - جاري التوجيه...`,
           });
         }
       }
@@ -204,6 +221,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   };
 
   const roleTitle = role === 'admin' ? 'المدير' : 'الأستاذ';
+  const roleIcon = role === 'admin' ? '🔐' : '📚';
 
   return (
     <motion.div
@@ -223,6 +241,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
       <div className="glass rounded-2xl p-8 border border-border/50 shadow-lg">
         <div className="text-center mb-8">
+          <div className="text-4xl mb-3">{roleIcon}</div>
           <h2 className="text-2xl font-bold text-foreground mb-2">
             {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
           </h2>
@@ -230,6 +249,25 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             {isLogin ? `مرحباً بعودتك ${roleTitle}` : `انضم إلينا كـ${roleTitle}`}
           </p>
         </div>
+
+        {/* Role mismatch error alert */}
+        {roleError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg"
+          >
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-destructive text-sm">{roleError}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  تأكد من اختيار الدور الصحيح أو استخدم حساباً آخر
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
@@ -367,12 +405,27 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             onClick={() => {
               setIsLogin(!isLogin);
               setErrors({});
+              setRoleError(null);
             }}
             className="text-primary hover:underline text-sm"
           >
             {isLogin ? 'ليس لديك حساب؟ أنشئ حساباً جديداً' : 'لديك حساب؟ سجل الدخول'}
           </button>
         </div>
+
+        {/* Role binding notice for signup */}
+        {!isLogin && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 p-3 bg-muted/50 rounded-lg"
+          >
+            <p className="text-xs text-muted-foreground text-center">
+              ⚠️ ملاحظة: سيتم ربط حسابك بشكل دائم بدور {roleTitle}. 
+              لا يمكن تغيير الدور بعد إنشاء الحساب.
+            </p>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

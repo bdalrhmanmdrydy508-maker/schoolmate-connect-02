@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, File, Trash2, Download, Calendar, FileText, Image, FileArchive, Loader2 } from 'lucide-react';
+import { Upload, File, Trash2, Download, Calendar, FileText, Image, FileArchive, Loader2, FileVideo, FileAudio, FileCode, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFileUpload, FILE_CONFIG } from '@/hooks/useFileUpload';
+import { FileUploadProgress } from '@/components/FileUploadProgress';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,9 +41,19 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<TeacherFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<TeacherFile | null>(null);
+
+  // Use the unified file upload hook
+  const { uploadFiles, isUploading, uploadProgress } = useFileUpload({
+    bucket: 'teacher-files',
+    saveToDatabase: true,
+    tableName: 'teacher_files',
+    teacherId: profile.id,
+    onSuccess: () => {
+      fetchFiles();
+    },
+  });
 
   useEffect(() => {
     fetchFiles();
@@ -67,82 +79,7 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
     const selectedFiles = event.target.files;
     if (!selectedFiles || selectedFiles.length === 0) return;
 
-    setIsUploading(true);
-
-    for (const file of Array.from(selectedFiles)) {
-      try {
-        // Get user ID for folder structure
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('المستخدم غير مسجل الدخول');
-
-        // Validate file size (max 50MB)
-        const maxSize = 50 * 1024 * 1024;
-        if (file.size > maxSize) {
-          throw new Error('حجم الملف يجب أن يكون أقل من 50 ميجابايت');
-        }
-
-        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'file';
-        const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        const fileName = `${uniqueId}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        // Upload to storage with content type
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('teacher-files')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type || 'application/octet-stream'
-          });
-
-        if (uploadError) {
-          console.error('Storage upload error:', uploadError);
-          throw new Error(uploadError.message || 'فشل رفع الملف للتخزين');
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('teacher-files')
-          .getPublicUrl(filePath);
-
-        if (!urlData?.publicUrl) {
-          throw new Error('فشل الحصول على رابط الملف');
-        }
-
-        // Save metadata to database
-        const { error: dbError } = await supabase
-          .from('teacher_files')
-          .insert({
-            teacher_id: profile.id,
-            file_name: file.name,
-            file_url: urlData.publicUrl,
-            file_size: file.size,
-            file_type: file.type || 'application/octet-stream',
-          });
-
-        if (dbError) {
-          console.error('Database insert error:', dbError);
-          // Try to clean up uploaded file
-          await supabase.storage.from('teacher-files').remove([filePath]);
-          throw new Error(dbError.message || 'فشل حفظ بيانات الملف');
-        }
-
-        toast({ 
-          title: 'تم الرفع بنجاح ✓', 
-          description: `تم رفع "${file.name}" بنجاح` 
-        });
-      } catch (error: any) {
-        console.error('Upload error:', error);
-        toast({ 
-          title: 'خطأ في الرفع', 
-          description: error.message || 'فشل رفع الملف', 
-          variant: 'destructive' 
-        });
-      }
-    }
-
-    setIsUploading(false);
-    await fetchFiles();
+    await uploadFiles(selectedFiles);
     
     // Reset input
     if (fileInputRef.current) {
@@ -193,11 +130,32 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
     setFileToDelete(null);
   };
 
-  const getFileIcon = (fileType: string | null) => {
-    if (!fileType) return <File className="w-6 h-6 text-muted-foreground" />;
+  const getFileIcon = (fileType: string | null, fileName: string) => {
+    if (!fileType) {
+      // Try to determine from extension
+      const ext = fileName.split('.').pop()?.toLowerCase() || '';
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+        return <Image className="w-6 h-6 text-primary" />;
+      }
+      if (['pdf'].includes(ext)) {
+        return <FileText className="w-6 h-6 text-destructive" />;
+      }
+      return <File className="w-6 h-6 text-muted-foreground" />;
+    }
+    
     if (fileType.startsWith('image/')) return <Image className="w-6 h-6 text-primary" />;
     if (fileType === 'application/pdf') return <FileText className="w-6 h-6 text-destructive" />;
-    if (fileType.includes('zip') || fileType.includes('rar')) return <FileArchive className="w-6 h-6 text-accent-foreground" />;
+    if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('7z')) {
+      return <FileArchive className="w-6 h-6 text-accent-foreground" />;
+    }
+    if (fileType.includes('video')) return <FileVideo className="w-6 h-6 text-primary" />;
+    if (fileType.includes('audio')) return <FileAudio className="w-6 h-6 text-primary" />;
+    if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
+      return <FileSpreadsheet className="w-6 h-6 text-primary" />;
+    }
+    if (fileType.includes('code') || fileType.includes('javascript') || fileType.includes('json')) {
+      return <FileCode className="w-6 h-6 text-primary" />;
+    }
     return <File className="w-6 h-6 text-secondary-foreground" />;
   };
 
@@ -226,6 +184,9 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
 
   const groupedFiles = groupFilesByDate(files);
 
+  // Generate accept attribute from allowed extensions
+  const acceptedExtensions = FILE_CONFIG.allowedExtensions.map(ext => `.${ext}`).join(',');
+
   return (
     <div className="space-y-6">
       {/* Upload Section */}
@@ -238,7 +199,7 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
             multiple
             onChange={handleFileSelect}
             className="hidden"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar"
+            accept={acceptedExtensions}
           />
           <Button 
             onClick={() => fileInputRef.current?.click()}
@@ -259,6 +220,16 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Supported formats info */}
+      <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
+        <p className="font-medium mb-1">الصيغ المدعومة:</p>
+        <p>PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, صور (JPG, PNG, GIF), ZIP, RAR, وغيرها...</p>
+        <p className="mt-1">الحد الأقصى: 50 ميجابايت</p>
+      </div>
+
+      {/* Upload Progress */}
+      <FileUploadProgress uploads={uploadProgress} />
 
       {/* Files List */}
       {isLoading ? (
@@ -297,7 +268,7 @@ export const TeacherFiles = ({ profile }: TeacherFilesProps) => {
                     >
                       <div className="flex items-start gap-3">
                         <div className="w-12 h-12 rounded-lg bg-secondary/50 flex items-center justify-center flex-shrink-0">
-                          {getFileIcon(file.file_type)}
+                          {getFileIcon(file.file_type, file.file_name)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium truncate" title={file.file_name}>
