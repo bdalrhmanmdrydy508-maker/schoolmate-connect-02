@@ -1,7 +1,7 @@
 {
-  "name": "نظام إدارة الثانويات",
-  "short_name": "إدارة الثانويات",
-  "description": "نظام متكامل لإدارة المؤسسات التعليمية الثانوية - للمدراء والأساتذة",
+  "name": "SmartNotebook - دفتر القسم الذكي",
+  "short_name": "SmartNotebook",
+  "description": "SmartNotebook - نظام متكامل لإدارة المؤسسات التعليمية الثانوية للمدراء والأساتذة",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a6b77",
