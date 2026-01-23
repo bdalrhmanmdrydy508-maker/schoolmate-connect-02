@@ -49,9 +49,12 @@ const RoleSelection = () => {
                 >
                   <GraduationCap className="w-10 h-10 text-primary-foreground" />
                 </motion.div>
-                <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
-                  مرحباً بك!
+                <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-2">
+                  SmartNotebook
                 </h1>
+                <p className="text-lg text-primary-foreground/70 mb-4">
+                  دفتر القسم الذكي
+                </p>
                 <p className="text-xl text-primary-foreground/80">
                   أنت على وشك البدء كـ...
                 </p>

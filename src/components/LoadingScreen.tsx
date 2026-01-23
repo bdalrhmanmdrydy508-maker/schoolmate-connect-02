@@ -28,7 +28,7 @@ const LoadingScreen = () => {
         <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150" />
         <img 
           src={logo} 
-          alt="Smart Class Logbook" 
+          alt="SmartNotebook" 
           className="relative w-28 h-28 object-contain drop-shadow-2xl"
         />
       </motion.div>
@@ -40,7 +40,7 @@ const LoadingScreen = () => {
         transition={{ delay: 0.3, duration: 0.5 }}
         className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2"
       >
-        Smart Class Logbook
+        SmartNotebook
       </motion.h1>
 
       {/* Subtitle */}

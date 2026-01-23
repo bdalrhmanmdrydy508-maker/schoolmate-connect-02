@@ -77,9 +77,9 @@ const InstallApp = () => {
             >
               <Smartphone className="w-10 h-10 text-white" />
             </motion.div>
-            <CardTitle className="text-2xl font-bold">تثبيت التطبيق</CardTitle>
+            <CardTitle className="text-2xl font-bold">SmartNotebook</CardTitle>
             <CardDescription className="text-base mt-2">
-              قم بتثبيت التطبيق على جهازك للوصول السريع والعمل بدون إنترنت
+              قم بتثبيت تطبيق SmartNotebook على جهازك للوصول السريع والعمل بدون إنترنت
             </CardDescription>
           </CardHeader>
 

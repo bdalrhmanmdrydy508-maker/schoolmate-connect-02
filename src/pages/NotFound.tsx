@@ -32,7 +32,7 @@ const NotFound = () => {
           className="gradient-primary text-primary-foreground px-8 py-6 text-lg rounded-xl"
         >
           <Home className="w-5 h-5 ml-2" />
-          العودة للرئيسية
+          العودة إلى SmartNotebook
         </Button>
       </motion.div>
     </div>
