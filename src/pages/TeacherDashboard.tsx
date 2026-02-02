@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, Heading2, List } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,9 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherSettings } from '@/components/TeacherSettings';
 import { TeacherFiles } from '@/components/TeacherFiles';
+import { Progress } from '@/components/ui/progress';
 
 interface TeacherProfile {
   id: string;
+  user_id: string;
   full_name: string;
   subject: string;
   email: string | null;
@@ -58,6 +60,7 @@ const TeacherDashboard = () => {
   const [lessonFile, setLessonFile] = useState<File | null>(null);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     fetchProfile();
@@ -80,7 +83,7 @@ const TeacherDashboard = () => {
     if (user) {
       const { data } = await supabase
         .from('teacher_profiles')
-        .select('id, full_name, subject, email, phone')
+        .select('id, user_id, full_name, subject, email, phone')
         .eq('user_id', user.id)
         .single();
       
@@ -184,27 +187,41 @@ const TeacherDashboard = () => {
     }
 
     setIsUploading(true);
+    setUploadProgress(10);
     let fileUrl: string | null = null;
 
     try {
-      // Upload file if provided
+      // Upload file if provided - use user_id for RLS compliance
       if (lessonFile) {
-        const fileExt = lessonFile.name.split('.').pop();
-        const fileName = `${profile.id}/${Date.now()}.${fileExt}`;
+        setUploadProgress(20);
+        const fileExt = lessonFile.name.split('.').pop()?.toLowerCase();
+        const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        // CRITICAL: Use profile.user_id (equals auth.uid()) for RLS policy compliance
+        const fileName = `${profile.user_id}/${uniqueId}.${fileExt}`;
         
-        const { error: uploadError, data: uploadData } = await supabase.storage
+        setUploadProgress(40);
+        
+        const { error: uploadError } = await supabase.storage
           .from('teacher-files')
-          .upload(fileName, lessonFile);
+          .upload(fileName, lessonFile, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: lessonFile.type || 'application/octet-stream'
+          });
 
         if (uploadError) {
-          throw new Error('فشل رفع الملف');
+          console.error('Storage upload error:', uploadError);
+          throw new Error(`فشل رفع الملف: ${uploadError.message}`);
         }
+
+        setUploadProgress(70);
 
         const { data: { publicUrl } } = supabase.storage
           .from('teacher-files')
           .getPublicUrl(fileName);
         
         fileUrl = publicUrl;
+        setUploadProgress(85);
       }
 
       // Insert lesson
@@ -219,9 +236,21 @@ const TeacherDashboard = () => {
           file_url: fileUrl,
         });
 
-      if (error) throw error;
+      if (error) {
+        // Rollback: delete uploaded file if lesson insert fails
+        if (fileUrl) {
+          const filePath = fileUrl.split('/teacher-files/').pop();
+          if (filePath) {
+            await supabase.storage.from('teacher-files').remove([filePath]);
+          }
+        }
+        throw error;
+      }
 
-      toast({ title: 'تم', description: 'تم إضافة الدرس/الحصة بنجاح' });
+      setUploadProgress(100);
+      toast({ title: 'تم بنجاح ✓', description: 'تم إضافة الدرس/الحصة بنجاح' });
+      
+      // Reset form
       setLessonTitle('');
       setLessonDescription('');
       setLessonDate('');
@@ -229,9 +258,11 @@ const TeacherDashboard = () => {
       setIsAddingLesson(false);
       fetchLessons();
     } catch (error: any) {
+      console.error('Lesson add error:', error);
       toast({ title: 'خطأ', description: error.message || 'فشل إضافة الدرس', variant: 'destructive' });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -486,12 +517,27 @@ const TeacherDashboard = () => {
                           )}
                         </div>
                         
+                        {isUploading && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">جاري الرفع...</span>
+                              <span className="font-medium">{uploadProgress}%</span>
+                            </div>
+                            <Progress value={uploadProgress} className="h-2" />
+                          </div>
+                        )}
+                        
                         <Button 
                           onClick={handleAddLesson} 
                           className="w-full gradient-primary"
                           disabled={isUploading || !lessonTitle || !lessonDate}
                         >
-                          {isUploading ? 'جاري الرفع...' : 'إضافة الدرس'}
+                          {isUploading ? (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>جاري الرفع...</span>
+                            </div>
+                          ) : 'إضافة الدرس'}
                         </Button>
                       </div>
                     </DialogContent>

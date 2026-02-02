@@ -19,8 +19,8 @@ import {
 
 interface TeacherProfile {
   id: string;
+  user_id: string;
   full_name: string;
-  user_id?: string;
 }
 
 interface TeacherFile {
