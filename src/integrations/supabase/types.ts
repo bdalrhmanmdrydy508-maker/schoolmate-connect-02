@@ -184,6 +184,53 @@ export type Database = {
           },
         ]
       }
+      students: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_of_birth: string | null
+          full_name: string
+          id: string
+          is_repeater: boolean
+          place_of_birth: string | null
+          section_id: string
+          surname: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          full_name: string
+          id?: string
+          is_repeater?: boolean
+          place_of_birth?: string | null
+          section_id: string
+          surname: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          full_name?: string
+          id?: string
+          is_repeater?: boolean
+          place_of_birth?: string | null
+          section_id?: string
+          surname?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subjects: {
         Row: {
           created_at: string
@@ -337,6 +384,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      timetables: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          id: string
+          section_id: string
+          subject_name: string | null
+          teacher_name: string | null
+          time_slot: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          id?: string
+          section_id: string
+          subject_name?: string | null
+          teacher_name?: string | null
+          time_slot: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          id?: string
+          section_id?: string
+          subject_name?: string | null
+          teacher_name?: string | null
+          time_slot?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetables_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
