@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2 } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherSettings } from '@/components/TeacherSettings';
 import { TeacherFiles } from '@/components/TeacherFiles';
+import { Timetable } from '@/components/Timetable';
+import { StudentList } from '@/components/StudentList';
 import { Progress } from '@/components/ui/progress';
 
 interface TeacherProfile {
@@ -52,6 +54,7 @@ const TeacherDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students'>('lessons');
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
@@ -418,7 +421,7 @@ const TeacherDashboard = () => {
                 className="space-y-6"
               >
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" onClick={() => setSelectedSection(null)}>
+                  <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); }}>
                     العودة للأقسام
                   </Button>
                   <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
@@ -543,12 +546,20 @@ const TeacherDashboard = () => {
                     </DialogContent>
                   </Dialog>
 
-                  <Button variant="outline" className="h-24 flex-col gap-2">
-                    <Calendar className="w-6 h-6" />
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex-col gap-2"
+                    onClick={() => setActiveView('timetable')}
+                  >
+                    <Clock className="w-6 h-6" />
                     الاستعمال الزمني
                   </Button>
 
-                  <Button variant="outline" className="h-24 flex-col gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex-col gap-2"
+                    onClick={() => setActiveView('students')}
+                  >
                     <Users className="w-6 h-6" />
                     قائمة التلاميذ
                   </Button>
@@ -559,46 +570,67 @@ const TeacherDashboard = () => {
                   </Button>
                 </div>
 
-                {/* Lessons list */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold">الدروس والحصص</h3>
-                  {lessons.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      لا توجد دروس بعد
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {lessons.map((lesson) => (
-                        <motion.button
-                          key={lesson.id}
-                          onClick={() => setSelectedLesson(lesson)}
-                          className="w-full p-4 rounded-lg bg-card border border-border/50 text-right hover:border-primary transition-colors"
-                          whileHover={{ scale: 1.01 }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">{lesson.title}</h4>
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}
-                            </span>
-                          </div>
-                          {lesson.description && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                              {lesson.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-2">
-                            {lesson.file_url && (
-                              <Badge variant="outline" className="text-xs">
-                                <FileText className="w-3 h-3 ml-1" />
-                                ملف مرفق
-                              </Badge>
-                            )}
-                          </div>
-                        </motion.button>
-                      ))}
+                {/* Conditional Views */}
+                {activeView === 'timetable' && (
+                  <Timetable
+                    sectionId={selectedSection.section_id}
+                    sectionName={(selectedSection as any).sections?.name || ''}
+                    onBack={() => setActiveView('lessons')}
+                  />
+                )}
+
+                {activeView === 'students' && (
+                  <StudentList
+                    sectionId={selectedSection.section_id}
+                    sectionName={(selectedSection as any).sections?.name || ''}
+                    onBack={() => setActiveView('lessons')}
+                  />
+                )}
+
+                {activeView === 'lessons' && (
+                  <>
+                    {/* Lessons list */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">الدروس والحصص</h3>
+                      {lessons.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          لا توجد دروس بعد
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {lessons.map((lesson) => (
+                            <motion.button
+                              key={lesson.id}
+                              onClick={() => setSelectedLesson(lesson)}
+                              className="w-full p-4 rounded-lg bg-card border border-border/50 text-right hover:border-primary transition-colors"
+                              whileHover={{ scale: 1.01 }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold">{lesson.title}</h4>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}
+                                </span>
+                              </div>
+                              {lesson.description && (
+                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                  {lesson.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2">
+                                {lesson.file_url && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <FileText className="w-3 h-3 ml-1" />
+                                    ملف مرفق
+                                  </Badge>
+                                )}
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </motion.div>
             )}
           </TabsContent>
@@ -648,7 +680,7 @@ const TeacherDashboard = () => {
                           </Button>
                           <Button
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-primary hover:bg-primary/90"
                             onClick={() => handleAssignmentResponse(assignment.id, true)}
                           >
                             <Check className="w-4 h-4" />
