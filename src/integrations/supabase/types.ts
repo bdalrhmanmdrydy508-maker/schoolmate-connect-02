@@ -354,6 +354,7 @@ export type Database = {
           id: string
           last_profile_update: string | null
           phone: string | null
+          status: string | null
           subject: string
           teacher_id: string
           updated_at: string
@@ -366,6 +367,7 @@ export type Database = {
           id?: string
           last_profile_update?: string | null
           phone?: string | null
+          status?: string | null
           subject: string
           teacher_id: string
           updated_at?: string
@@ -378,6 +380,7 @@ export type Database = {
           id?: string
           last_profile_update?: string | null
           phone?: string | null
+          status?: string | null
           subject?: string
           teacher_id?: string
           updated_at?: string

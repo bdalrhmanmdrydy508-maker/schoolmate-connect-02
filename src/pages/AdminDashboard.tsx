@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdminSettings } from '@/components/AdminSettings';
 import { SectionManagement } from '@/components/SectionManagement';
+import { Timetable } from '@/components/Timetable';
+import { StudentList } from '@/components/StudentList';
 
 interface AdminProfile {
   full_name: string;
@@ -112,7 +114,7 @@ const AdminDashboard = () => {
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
-  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
@@ -441,7 +443,9 @@ const AdminDashboard = () => {
   };
 
   const handleBack = () => {
-    if (currentView === 'subject-lessons') {
+    if (currentView === 'section-timetable' || currentView === 'section-students') {
+      setCurrentView('section-detail');
+    } else if (currentView === 'subject-lessons') {
       setCurrentView('section-detail');
       setSelectedSubject(null);
       setSelectedTeacherAssignment(null);
@@ -863,13 +867,35 @@ const AdminDashboard = () => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-8"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-primary-foreground" />
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{selectedSection.name}</h2>
+                    <p className="text-muted-foreground">{selectedBranch?.name} - {selectedLevel?.name}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedSection.name}</h2>
-                  <p className="text-muted-foreground">{selectedBranch?.name} - {selectedLevel?.name}</p>
+                
+                {/* Section Quick Actions */}
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setCurrentView('section-students')}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    قائمة التلاميذ
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setCurrentView('section-timetable')}
+                  >
+                    <Clock className="w-4 h-4" />
+                    الجدول الزمني
+                  </Button>
                 </div>
               </div>
 
@@ -1089,6 +1115,26 @@ const AdminDashboard = () => {
                 )}
               </div>
             </motion.div>
+          )}
+
+          {/* Section Timetable View */}
+          {currentView === 'section-timetable' && selectedSection && (
+            <Timetable
+              sectionId={selectedSection.id}
+              sectionName={selectedSection.name}
+              onBack={() => setCurrentView('section-detail')}
+              readOnly={false}
+            />
+          )}
+
+          {/* Section Students View */}
+          {currentView === 'section-students' && selectedSection && (
+            <StudentList
+              sectionId={selectedSection.id}
+              sectionName={selectedSection.name}
+              onBack={() => setCurrentView('section-detail')}
+              readOnly={false}
+            />
           )}
         </AnimatePresence>
       </main>

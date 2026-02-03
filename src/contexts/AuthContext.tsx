@@ -102,7 +102,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // Success - role matches
+      // For teachers, check approval status
+      if (actualRole === 'teacher') {
+        const { data: teacherProfile } = await supabase
+          .from('teacher_profiles')
+          .select('status')
+          .eq('user_id', authData.user.id)
+          .single();
+
+        if (teacherProfile?.status === 'pending') {
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: 'حسابك قيد المراجعة. يرجى انتظار موافقة المدير.'
+          };
+        }
+
+        if (teacherProfile?.status === 'rejected') {
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: 'تم رفض طلب التسجيل. يرجى التواصل مع المدير.'
+          };
+        }
+      }
+
+      // Success - role matches and approved
       setUser(authData.user);
       setSession(authData.session);
       setRole(actualRole);

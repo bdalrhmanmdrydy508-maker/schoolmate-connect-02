@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, ShieldAlert } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, ShieldAlert, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { z } from 'zod';
+
+// Secret code for admin access
+const ADMIN_SECRET_CODE = 'aqzsedrftgyhujikolpm';
 
 const SUBJECTS = [
   'رياضيات', 'فيزياء', 'علوم طبيعية', 'عربية', 'فرنسية',
@@ -22,6 +25,7 @@ const adminSchema = z.object({
   password: z.string().min(6, 'كلمة السر يجب أن تكون 6 أحرف على الأقل'),
   confirmPassword: z.string(),
   institutionName: z.string().min(2, 'اسم المؤسسة مطلوب'),
+  secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, 'الرمز السري غير صحيح'),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'كلمة السر غير متطابقة',
   path: ['confirmPassword'],
@@ -38,7 +42,13 @@ const teacherSchema = z.object({
   path: ['confirmPassword'],
 });
 
-const loginSchema = z.object({
+const adminLoginSchema = z.object({
+  email: z.string().email('البريد الإلكتروني غير صالح'),
+  password: z.string().min(1, 'كلمة السر مطلوبة'),
+  secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, 'الرمز السري غير صحيح'),
+});
+
+const teacherLoginSchema = z.object({
   email: z.string().email('البريد الإلكتروني غير صالح'),
   password: z.string().min(1, 'كلمة السر مطلوبة'),
 });
@@ -64,6 +74,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     confirmPassword: '',
     institutionName: '',
     subject: '',
+    secretCode: '',
   });
 
   const handleChange = (field: string, value: string) => {
@@ -80,7 +91,8 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
     try {
       if (isLogin) {
-        // Validate form data
+        // Validate form data based on role
+        const loginSchema = role === 'admin' ? adminLoginSchema : teacherLoginSchema;
         const result = loginSchema.safeParse(formData);
         if (!result.success) {
           const fieldErrors: Record<string, string> = {};
@@ -187,6 +199,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               console.error('Error inserting admin profile:', profileError);
             }
           } else {
+            // Teacher accounts start as 'pending' and need admin approval
             const { error: profileError } = await supabase
               .from('teacher_profiles')
               .insert({
@@ -195,11 +208,22 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
                 email: formData.email,
                 subject: formData.subject,
                 teacher_id: authData.user.id.substring(0, 8).toUpperCase(),
+                status: 'pending', // Requires admin approval
               });
 
             if (profileError) {
               console.error('Error inserting teacher profile:', profileError);
             }
+
+            // Sign out teacher - they need approval first
+            await supabase.auth.signOut();
+            
+            toast({
+              title: 'تم إرسال طلب التسجيل',
+              description: 'طلب التسجيل قيد المراجعة. يرجى انتظار موافقة المدير.',
+            });
+            setLoading(false);
+            return;
           }
 
           toast({
@@ -328,6 +352,29 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
           </div>
 
+          {/* Secret Code Field - Required for Admin */}
+          {role === 'admin' && (
+            <div className="space-y-2">
+              <Label htmlFor="secretCode" className="text-foreground">الرمز السري</Label>
+              <div className="relative">
+                <KeyRound className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="secretCode"
+                  type="password"
+                  value={formData.secretCode}
+                  onChange={(e) => handleChange('secretCode', e.target.value)}
+                  className="pr-10 bg-background/50"
+                  placeholder="أدخل الرمز السري للمدير"
+                  dir="ltr"
+                />
+              </div>
+              {errors.secretCode && <p className="text-destructive text-sm">{errors.secretCode}</p>}
+              <p className="text-xs text-muted-foreground">
+                الرمز السري مطلوب للوصول إلى واجهة المدير
+              </p>
+            </div>
+          )}
+
           {!isLogin && (
             <>
               <div className="space-y-2">
@@ -421,8 +468,9 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             className="mt-4 p-3 bg-muted/50 rounded-lg"
           >
             <p className="text-xs text-muted-foreground text-center">
-              ⚠️ ملاحظة: سيتم ربط حسابك بشكل دائم بدور {roleTitle}. 
-              لا يمكن تغيير الدور بعد إنشاء الحساب.
+              {role === 'teacher' 
+                ? '⏳ ملاحظة: سيتم مراجعة طلب التسجيل من قبل المدير قبل تفعيل الحساب.'
+                : '⚠️ ملاحظة: سيتم ربط حسابك بشكل دائم بدور المدير. لا يمكن تغيير الدور بعد إنشاء الحساب.'}
             </p>
           </motion.div>
         )}

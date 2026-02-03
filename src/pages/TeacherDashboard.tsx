@@ -576,6 +576,7 @@ const TeacherDashboard = () => {
                     sectionId={selectedSection.section_id}
                     sectionName={(selectedSection as any).sections?.name || ''}
                     onBack={() => setActiveView('lessons')}
+                    readOnly={true}
                   />
                 )}
 
@@ -584,6 +585,7 @@ const TeacherDashboard = () => {
                     sectionId={selectedSection.section_id}
                     sectionName={(selectedSection as any).sections?.name || ''}
                     onBack={() => setActiveView('lessons')}
+                    readOnly={true}
                   />
                 )}
 

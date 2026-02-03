@@ -27,9 +27,10 @@ interface StudentListProps {
   sectionId: string;
   sectionName: string;
   onBack: () => void;
+  readOnly?: boolean; // New prop for read-only mode (for teachers)
 }
 
-export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps) => {
+export const StudentList = ({ sectionId, sectionName, onBack, readOnly = false }: StudentListProps) => {
   const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,6 +81,8 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
   };
 
   const handleAddStudent = async () => {
+    if (readOnly) return;
+    
     if (!formData.full_name.trim() || !formData.surname.trim()) {
       toast({ title: 'تنبيه', description: 'يرجى ملء الاسم واللقب', variant: 'destructive' });
       return;
@@ -110,7 +113,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
   };
 
   const handleUpdateStudent = async () => {
-    if (!editingStudent) return;
+    if (!editingStudent || readOnly) return;
 
     if (!formData.full_name.trim() || !formData.surname.trim()) {
       toast({ title: 'تنبيه', description: 'يرجى ملء الاسم واللقب', variant: 'destructive' });
@@ -144,6 +147,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
   };
 
   const handleDeleteStudent = async (studentId: string) => {
+    if (readOnly) return;
     if (!confirm('هل أنت متأكد من حذف هذا التلميذ؟')) return;
 
     try {
@@ -159,6 +163,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
   };
 
   const startEdit = (student: Student) => {
+    if (readOnly) return;
     setEditingStudent(student);
     setFormData({
       full_name: student.full_name,
@@ -212,6 +217,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Users className="w-5 h-5" />
           قائمة التلاميذ - {sectionName}
+          {readOnly && <span className="text-sm font-normal text-muted-foreground">(للعرض فقط)</span>}
         </h2>
       </div>
 
@@ -248,30 +254,32 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
             </Button>
           </div>
 
-          {/* Add Button */}
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                إضافة تلميذ
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>إضافة تلميذ جديد</DialogTitle>
-              </DialogHeader>
-              <StudentForm
-                formData={formData}
-                setFormData={setFormData}
-                onSave={handleAddStudent}
-                onCancel={() => {
-                  resetForm();
-                  setIsAddDialogOpen(false);
-                }}
-                isSaving={isSaving}
-              />
-            </DialogContent>
-          </Dialog>
+          {/* Add Button - Only show if not readOnly */}
+          {!readOnly && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  إضافة تلميذ
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>إضافة تلميذ جديد</DialogTitle>
+                </DialogHeader>
+                <StudentForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  onSave={handleAddStudent}
+                  onCancel={() => {
+                    resetForm();
+                    setIsAddDialogOpen(false);
+                  }}
+                  isSaving={isSaving}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -280,7 +288,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
         <div className="text-center py-12 text-muted-foreground">
           <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
           <p>{searchQuery ? 'لا توجد نتائج للبحث' : 'لا يوجد تلاميذ في هذا القسم بعد'}</p>
-          <p className="text-sm">اضغط على "إضافة تلميذ" لإضافة تلميذ جديد</p>
+          {!readOnly && <p className="text-sm">اضغط على "إضافة تلميذ" لإضافة تلميذ جديد</p>}
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -294,7 +302,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
                   <TableHead>تاريخ الميلاد</TableHead>
                   <TableHead>مكان الميلاد</TableHead>
                   <TableHead className="text-center">الحالة</TableHead>
-                  <TableHead className="w-24 text-center">الإجراءات</TableHead>
+                  {!readOnly && <TableHead className="w-24 text-center">الإجراءات</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -311,7 +319,7 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
                         editingStudent?.id === student.id && "bg-primary/5"
                       )}
                     >
-                      {editingStudent?.id === student.id ? (
+                      {editingStudent?.id === student.id && !readOnly ? (
                         <TableCell colSpan={7} className="p-4">
                           <StudentForm
                             formData={formData}
@@ -348,26 +356,28 @@ export const StudentList = ({ sectionId, sectionName, onBack }: StudentListProps
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => startEdit(student)}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteStudent(student.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                          {!readOnly && (
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => startEdit(student)}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteStudent(student.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </>
                       )}
                     </motion.tr>
