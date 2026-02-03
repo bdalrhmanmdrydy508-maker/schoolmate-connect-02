@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { X, Save, Moon, Sun, Monitor, Type, Globe, Pencil, Lock, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Save, Moon, Sun, Monitor, Type, Globe, Pencil, Lock, AlertCircle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ControlPanel } from '@/components/ControlPanel';
 
 interface AdminProfile {
   id?: string;
@@ -36,6 +37,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   const [fullName, setFullName] = useState(profile.full_name);
   const [institutionName, setInstitutionName] = useState(profile.institution_name);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showControlPanel, setShowControlPanel] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -482,8 +484,33 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
               </div>
             </div>
           </div>
+
+          <Separator />
+
+          {/* Control Panel Button */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">إدارة الأساتذة</h3>
+            <Button 
+              onClick={() => setShowControlPanel(true)}
+              className="w-full gap-2"
+              variant="outline"
+            >
+              <Users className="w-5 h-5" />
+              لوحة التحكم
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              إدارة طلبات تسجيل الأساتذة والموافقة عليها أو رفضها
+            </p>
+          </div>
         </div>
       </motion.div>
+
+      {/* Control Panel Modal */}
+      <AnimatePresence>
+        {showControlPanel && (
+          <ControlPanel onClose={() => setShowControlPanel(false)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

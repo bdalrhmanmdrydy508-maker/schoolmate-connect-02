@@ -20,6 +20,7 @@ interface TimetableProps {
   sectionId: string;
   sectionName: string;
   onBack: () => void;
+  readOnly?: boolean; // New prop for read-only mode (for teachers)
 }
 
 const DAYS = [
@@ -41,7 +42,7 @@ const TIME_SLOTS = [
   { slot: '16:00', label: '16:00 - 17:00' },
 ];
 
-export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) => {
+export const Timetable = ({ sectionId, sectionName, onBack, readOnly = false }: TimetableProps) => {
   const { toast } = useToast();
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
   const [editingCell, setEditingCell] = useState<{ day: number; slot: string } | null>(null);
@@ -79,6 +80,9 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
   };
 
   const handleCellClick = (dayIndex: number, timeSlot: string) => {
+    // Don't allow editing in read-only mode
+    if (readOnly) return;
+    
     const entry = getEntry(dayIndex, timeSlot);
     setEditingCell({ day: dayIndex, slot: timeSlot });
     setEditSubject(entry?.subject_name || '');
@@ -86,7 +90,7 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
   };
 
   const handleSave = async () => {
-    if (!editingCell) return;
+    if (!editingCell || readOnly) return;
 
     setIsSaving(true);
     const existingEntry = getEntry(editingCell.day, editingCell.slot);
@@ -150,7 +154,7 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
   };
 
   const handleDelete = async () => {
-    if (!editingCell) return;
+    if (!editingCell || readOnly) return;
 
     const existingEntry = getEntry(editingCell.day, editingCell.slot);
     if (!existingEntry?.id) {
@@ -198,6 +202,7 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Clock className="w-5 h-5" />
           الجدول الزمني - {sectionName}
+          {readOnly && <span className="text-sm font-normal text-muted-foreground">(للعرض فقط)</span>}
         </h2>
       </div>
 
@@ -247,12 +252,12 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
                       className={cn(
                         "p-1 text-center transition-all relative",
                         currentDayIndex === day.index && "bg-primary/5",
-                        !isEditing && "cursor-pointer hover:bg-accent/50",
+                        !isEditing && !readOnly && "cursor-pointer hover:bg-accent/50",
                         hasContent && !isEditing && "bg-primary/10"
                       )}
                       onClick={() => !isEditing && handleCellClick(day.index, timeSlot.slot)}
                     >
-                      {isEditing ? (
+                      {isEditing && !readOnly ? (
                         <motion.div
                           initial={{ scale: 0.9 }}
                           animate={{ scale: 1 }}
@@ -317,7 +322,7 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
                             </>
                           ) : (
                             <span className="text-xs text-muted-foreground/50">
-                              <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                              {!readOnly && <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
                             </span>
                           )}
                         </div>
@@ -341,10 +346,12 @@ export const Timetable = ({ sectionId, sectionName, onBack }: TimetableProps) =>
           <div className="w-4 h-4 rounded bg-primary/5 border-b-2 border-primary" />
           <span>اليوم الحالي</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Edit2 className="w-4 h-4" />
-          <span>انقر على أي خانة للتعديل</span>
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-2">
+            <Edit2 className="w-4 h-4" />
+            <span>انقر على أي خانة للتعديل</span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
