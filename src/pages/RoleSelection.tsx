@@ -4,11 +4,13 @@ import { GraduationCap, Shield } from 'lucide-react';
 import { RoleCard } from '@/components/RoleCard';
 import { AuthForm } from '@/components/AuthForm';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type SelectedRole = 'admin' | 'teacher' | null;
 
 const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState<SelectedRole>(null);
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
@@ -50,28 +52,28 @@ const RoleSelection = () => {
                   <GraduationCap className="w-10 h-10 text-primary-foreground" />
                 </motion.div>
                 <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-2">
-                  SmartNotebook
+                  {t.common.appName}
                 </h1>
                 <p className="text-lg text-primary-foreground/70 mb-4">
-                  دفتر القسم الذكي
+                  {t.common.appSubtitle}
                 </p>
                 <p className="text-xl text-primary-foreground/80">
-                  أنت على وشك البدء كـ...
+                  {t.roles.aboutToStartAs}
                 </p>
               </motion.div>
 
               {/* Role Cards */}
               <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
                 <RoleCard
-                  title="المدير"
-                  description="إدارة المؤسسة التعليمية والأقسام والمواد وإسناد الأساتذة"
+                  title={t.roles.admin}
+                  description={t.roles.adminDescription}
                   icon={Shield}
                   onClick={() => setSelectedRole('admin')}
                   delay={0.3}
                 />
                 <RoleCard
-                  title="الأستاذ"
-                  description="إدارة الدروس والتلاميذ وتقديم المحتوى التعليمي"
+                  title={t.roles.teacher}
+                  description={t.roles.teacherDescription}
                   icon={GraduationCap}
                   onClick={() => setSelectedRole('teacher')}
                   delay={0.4}

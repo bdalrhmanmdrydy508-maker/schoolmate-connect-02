@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { ControlPanel } from '@/components/ControlPanel';
 
 interface AdminProfile {
@@ -33,6 +34,7 @@ interface AdminSettingsProps {
 
 export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate }: AdminSettingsProps) => {
   const { toast } = useToast();
+  const { t, language, setLanguage } = useLanguage();
   const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState(profile.full_name);
   const [institutionName, setInstitutionName] = useState(profile.institution_name);
@@ -44,7 +46,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   const [isLoading, setIsLoading] = useState(false);
   const [lastProfileUpdate, setLastProfileUpdate] = useState<string | null>(null);
   const [settings, setSettings] = useState<UserSettings>({
-    language: 'ar',
+    language: language,
     font_size: 'medium',
     theme: 'system',
   });
@@ -109,8 +111,8 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
   const handleSaveProfile = async () => {
     if (!canEditProfile()) {
       toast({ 
-        title: 'غير مسموح', 
-        description: `يمكنك تعديل البيانات بعد ${getDaysRemaining()} يوم`, 
+        title: t.settings.notAllowed, 
+        description: t.settings.canEditAfter.replace('{days}', String(getDaysRemaining())), 
         variant: 'destructive' 
       });
       return;
@@ -132,9 +134,9 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
         .eq('user_id', user.id);
 
       if (error) {
-        toast({ title: 'خطأ', description: 'فشل حفظ البيانات', variant: 'destructive' });
+        toast({ title: t.common.error, description: t.settings.dataSaveError, variant: 'destructive' });
       } else {
-        toast({ title: 'تم بنجاح', description: 'تم حفظ البيانات' });
+        toast({ title: t.common.success, description: t.settings.dataSaved });
         setLastProfileUpdate(now);
         onProfileUpdate({ ...profile, full_name: fullName, institution_name: institutionName });
         setEditMode(false);
@@ -145,17 +147,17 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
 
   const handleChangePassword = async () => {
     if (!currentPassword) {
-      toast({ title: 'خطأ', description: 'يرجى إدخال كلمة المرور الحالية', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.settings.enterCurrentPassword, variant: 'destructive' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast({ title: 'خطأ', description: 'كلمتا المرور غير متطابقتين', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.settings.passwordMismatch, variant: 'destructive' });
       return;
     }
 
     if (newPassword.length < 6) {
-      toast({ title: 'خطأ', description: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.settings.passwordTooShort, variant: 'destructive' });
       return;
     }
 
@@ -165,7 +167,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) {
       setIsLoading(false);
-      toast({ title: 'خطأ', description: 'لم يتم العثور على بيانات المستخدم', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.settings.userNotFound, variant: 'destructive' });
       return;
     }
 
@@ -176,7 +178,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
 
     if (signInError) {
       setIsLoading(false);
-      toast({ title: 'خطأ', description: 'كلمة المرور الحالية غير صحيحة', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.settings.wrongCurrentPassword, variant: 'destructive' });
       return;
     }
 
@@ -184,9 +186,9 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
     setIsLoading(false);
 
     if (error) {
-      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+      toast({ title: t.common.error, description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'تم بنجاح', description: 'تم تغيير كلمة المرور' });
+      toast({ title: t.common.success, description: t.settings.passwordChanged });
       setShowPasswordForm(false);
       setCurrentPassword('');
       setNewPassword('');
@@ -207,6 +209,10 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
         value === 'small' ? '14px' : value === 'large' ? '18px' : '16px';
     }
 
+    if (key === 'language' && (value === 'ar' || value === 'en')) {
+      await setLanguage(value);
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { error } = await supabase
@@ -220,7 +226,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
       if (error) {
         console.error('Error saving settings:', error);
       } else {
-        toast({ title: 'تم الحفظ', description: 'تم حفظ الإعدادات' });
+        toast({ title: t.common.success, description: t.settings.settingsSaved });
       }
     }
   };
@@ -242,7 +248,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
       >
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border/50 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">إعدادات الحساب</h2>
+          <h2 className="text-xl font-bold">{t.settings.title}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
@@ -252,17 +258,17 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
           {/* Profile Info */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">معلومات الحساب</h3>
+              <h3 className="font-semibold text-lg">{t.settings.accountInfo}</h3>
               {!editMode && (
                 canEditProfile() ? (
                   <Button variant="ghost" size="sm" onClick={() => setEditMode(true)}>
                     <Pencil className="w-4 h-4 ml-2" />
-                    تعديل
+                    {t.common.edit}
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Lock className="w-4 h-4" />
-                    <span>التعديل متاح بعد {getDaysRemaining()} يوم</span>
+                    <span>{t.settings.editAvailableIn.replace('{days}', String(getDaysRemaining()))}</span>
                   </div>
                 )
               )}
@@ -273,8 +279,8 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
               <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-600 dark:text-amber-400">تعديل البيانات مقيّد</p>
-                  <p className="text-muted-foreground">يُسمح بتعديل البيانات الشخصية مرة واحدة كل 60 يوماً. متبقي {getDaysRemaining()} يوم.</p>
+                  <p className="font-medium text-amber-600 dark:text-amber-400">{t.settings.editRestricted}</p>
+                  <p className="text-muted-foreground">{t.settings.editRestrictionNote} {t.settings.daysRemaining.replace('{days}', String(getDaysRemaining()))}</p>
                 </div>
               </div>
             )}
@@ -282,7 +288,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
             {editMode ? (
               <div className="space-y-3 p-4 bg-secondary/20 rounded-lg">
                 <div className="space-y-2">
-                  <Label>الاسم الكامل</Label>
+                  <Label>{t.auth.fullName}</Label>
                   <Input
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -290,7 +296,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                 </div>
 
                 <div className="space-y-2">
-                  <Label>اسم المؤسسة</Label>
+                  <Label>{t.settings.institution}</Label>
                   <Input
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
@@ -304,7 +310,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                     className="flex-1"
                   >
                     <Save className="w-4 h-4 ml-2" />
-                    {isLoading ? 'جاري الحفظ...' : 'حفظ'}
+                    {isLoading ? t.common.saving : t.common.save}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -314,25 +320,25 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                       setInstitutionName(profile.institution_name);
                     }}
                   >
-                    إلغاء
+                    {t.common.cancel}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                  <span className="text-muted-foreground">الاسم الكامل</span>
+                  <span className="text-muted-foreground">{t.auth.fullName}</span>
                   <span className="font-medium">{profile.full_name}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                  <span className="text-muted-foreground">المؤسسة</span>
+                  <span className="text-muted-foreground">{t.settings.institution}</span>
                   <span className="font-medium">{profile.institution_name}</span>
                 </div>
 
                 {profile.email && (
                   <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                    <span className="text-muted-foreground">البريد الإلكتروني</span>
+                    <span className="text-muted-foreground">{t.auth.email}</span>
                     <span className="font-medium" dir="ltr">{profile.email}</span>
                   </div>
                 )}
@@ -344,7 +350,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
 
           {/* Password Change */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">الأمان</h3>
+            <h3 className="font-semibold text-lg">{t.settings.security}</h3>
             
             {!showPasswordForm ? (
               <Button 
@@ -352,37 +358,37 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                 onClick={() => setShowPasswordForm(true)}
                 className="w-full"
               >
-                تغيير كلمة المرور
+                {t.settings.changePassword}
               </Button>
             ) : (
               <div className="space-y-3 p-4 bg-secondary/20 rounded-lg">
                 <div className="space-y-2">
-                  <Label>كلمة المرور الحالية</Label>
+                  <Label>{t.settings.currentPassword}</Label>
                   <Input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="أدخل كلمة المرور الحالية"
+                    placeholder={t.settings.enterCurrentPassword}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>كلمة المرور الجديدة</Label>
+                  <Label>{t.settings.newPassword}</Label>
                   <Input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="أدخل كلمة المرور الجديدة"
+                    placeholder={t.settings.enterNewPassword}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>تأكيد كلمة المرور</Label>
+                  <Label>{t.settings.confirmNewPassword}</Label>
                   <Input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="أعد إدخال كلمة المرور"
+                    placeholder={t.settings.reEnterPassword}
                   />
                 </div>
 
@@ -392,7 +398,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                     disabled={isLoading || !currentPassword}
                     className="flex-1"
                   >
-                    {isLoading ? 'جاري الحفظ...' : 'حفظ'}
+                    {isLoading ? t.common.saving : t.common.save}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -403,7 +409,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                       setConfirmPassword('');
                     }}
                   >
-                    إلغاء
+                    {t.common.cancel}
                   </Button>
                 </div>
               </div>
@@ -414,13 +420,13 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
 
           {/* Interface Settings */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">إعدادات الواجهة</h3>
+            <h3 className="font-semibold text-lg">{t.settings.interfaceSettings}</h3>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground" />
-                  <span>اللغة</span>
+                  <span>{t.settings.language}</span>
                 </div>
                 <Select 
                   value={settings.language} 
@@ -430,9 +436,8 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ar">العربية</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="ar">{t.languages.ar}</SelectItem>
+                    <SelectItem value="en">{t.languages.en}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -440,7 +445,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Type className="w-4 h-4 text-muted-foreground" />
-                  <span>حجم الخط</span>
+                  <span>{t.settings.fontSize}</span>
                 </div>
                 <Select 
                   value={settings.font_size} 
@@ -450,9 +455,9 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="small">صغير</SelectItem>
-                    <SelectItem value="medium">متوسط</SelectItem>
-                    <SelectItem value="large">كبير</SelectItem>
+                    <SelectItem value="small">{t.settings.fontSmall}</SelectItem>
+                    <SelectItem value="medium">{t.settings.fontMedium}</SelectItem>
+                    <SelectItem value="large">{t.settings.fontLarge}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -466,7 +471,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                   ) : (
                     <Monitor className="w-4 h-4 text-muted-foreground" />
                   )}
-                  <span>المظهر</span>
+                  <span>{t.settings.theme}</span>
                 </div>
                 <Select 
                   value={settings.theme} 
@@ -476,9 +481,9 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="system">تلقائي</SelectItem>
-                    <SelectItem value="light">نهاري</SelectItem>
-                    <SelectItem value="dark">ليلي</SelectItem>
+                    <SelectItem value="system">{t.settings.themeSystem}</SelectItem>
+                    <SelectItem value="light">{t.settings.themeLight}</SelectItem>
+                    <SelectItem value="dark">{t.settings.themeDark}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -489,17 +494,17 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
 
           {/* Control Panel Button */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">إدارة الأساتذة</h3>
+            <h3 className="font-semibold text-lg">{t.controlPanel.allTeachers.split(' ')[0]}</h3>
             <Button 
               onClick={() => setShowControlPanel(true)}
               className="w-full gap-2"
               variant="outline"
             >
               <Users className="w-5 h-5" />
-              لوحة التحكم
+              {t.settings.controlPanel}
             </Button>
             <p className="text-xs text-muted-foreground">
-              إدارة طلبات تسجيل الأساتذة والموافقة عليها أو رفضها
+              {t.controlPanel.subtitle}
             </p>
           </div>
         </div>

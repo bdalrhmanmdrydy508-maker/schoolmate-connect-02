@@ -1,0 +1,42 @@
+import ar from './translations/ar';
+import en from './translations/en';
+
+export type Language = 'ar' | 'en';
+export type TranslationKeys = typeof ar;
+
+export const translations: Record<Language, TranslationKeys> = {
+  ar,
+  en,
+};
+
+export const defaultLanguage: Language = 'ar';
+
+// Get nested translation value
+export function getTranslation(
+  translations: TranslationKeys,
+  path: string
+): string {
+  const keys = path.split('.');
+  let result: any = translations;
+  
+  for (const key of keys) {
+    if (result && typeof result === 'object' && key in result) {
+      result = result[key];
+    } else {
+      return path; // Return path if translation not found
+    }
+  }
+  
+  return typeof result === 'string' ? result : path;
+}
+
+// Replace placeholders in translation strings
+export function formatTranslation(str: string, params: Record<string, string | number>): string {
+  let result = str;
+  for (const [key, value] of Object.entries(params)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+  }
+  return result;
+}
+
+export { ar, en };

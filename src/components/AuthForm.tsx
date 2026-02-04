@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { z } from 'zod';
 
 // Secret code for admin access
@@ -18,40 +19,6 @@ const SUBJECTS = [
   'إنجليزية', 'رياضة', 'رسم', 'إعلام آلي', 'تاريخ وجغرافيا',
   'فلسفة', 'اقتصاد', 'قانون'
 ];
-
-const adminSchema = z.object({
-  fullName: z.string().min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل'),
-  email: z.string().email('البريد الإلكتروني غير صالح'),
-  password: z.string().min(6, 'كلمة السر يجب أن تكون 6 أحرف على الأقل'),
-  confirmPassword: z.string(),
-  institutionName: z.string().min(2, 'اسم المؤسسة مطلوب'),
-  secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, 'الرمز السري غير صحيح'),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'كلمة السر غير متطابقة',
-  path: ['confirmPassword'],
-});
-
-const teacherSchema = z.object({
-  fullName: z.string().min(3, 'الاسم يجب أن يكون 3 أحرف على الأقل'),
-  email: z.string().email('البريد الإلكتروني غير صالح'),
-  password: z.string().min(6, 'كلمة السر يجب أن تكون 6 أحرف على الأقل'),
-  confirmPassword: z.string(),
-  subject: z.string().min(1, 'يرجى اختيار المادة'),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'كلمة السر غير متطابقة',
-  path: ['confirmPassword'],
-});
-
-const adminLoginSchema = z.object({
-  email: z.string().email('البريد الإلكتروني غير صالح'),
-  password: z.string().min(1, 'كلمة السر مطلوبة'),
-  secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, 'الرمز السري غير صحيح'),
-});
-
-const teacherLoginSchema = z.object({
-  email: z.string().email('البريد الإلكتروني غير صالح'),
-  password: z.string().min(1, 'كلمة السر مطلوبة'),
-});
 
 interface AuthFormProps {
   role: 'admin' | 'teacher';
@@ -66,6 +33,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   const [roleError, setRoleError] = useState<string | null>(null);
   const { toast } = useToast();
   const { validateRoleForLogin } = useAuth();
+  const { t, isRTL } = useLanguage();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -75,6 +43,41 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     institutionName: '',
     subject: '',
     secretCode: '',
+  });
+
+  // Dynamic validation schemas
+  const adminSchema = z.object({
+    fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
+    email: z.string().email(t.auth.email + ' invalid'),
+    password: z.string().min(6, t.settings.passwordTooShort),
+    confirmPassword: z.string(),
+    institutionName: z.string().min(2, t.settings.institution + ' required'),
+    secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, t.auth.invalidSecretCode),
+  }).refine(data => data.password === data.confirmPassword, {
+    message: t.settings.passwordMismatch,
+    path: ['confirmPassword'],
+  });
+
+  const teacherSchema = z.object({
+    fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
+    email: z.string().email(t.auth.email + ' invalid'),
+    password: z.string().min(6, t.settings.passwordTooShort),
+    confirmPassword: z.string(),
+    subject: z.string().min(1, t.settings.subject + ' required'),
+  }).refine(data => data.password === data.confirmPassword, {
+    message: t.settings.passwordMismatch,
+    path: ['confirmPassword'],
+  });
+
+  const adminLoginSchema = z.object({
+    email: z.string().email(t.auth.email + ' invalid'),
+    password: z.string().min(1, t.auth.password + ' required'),
+    secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, t.auth.invalidSecretCode),
+  });
+
+  const teacherLoginSchema = z.object({
+    email: z.string().email(t.auth.email + ' invalid'),
+    password: z.string().min(1, t.auth.password + ' required'),
   });
 
   const handleChange = (field: string, value: string) => {
@@ -113,9 +116,9 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
         if (!validation.success) {
           // Set role-specific error message
-          setRoleError(validation.error || 'فشل تسجيل الدخول');
+          setRoleError(validation.error || t.common.error);
           toast({
-            title: role === 'admin' ? 'فشل تسجيل دخول المدير' : 'فشل تسجيل دخول الأستاذ',
+            title: role === 'admin' ? t.auth.adminLoginFailed : t.auth.teacherLoginFailed,
             description: validation.error,
             variant: 'destructive',
           });
@@ -124,8 +127,8 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         }
 
         toast({
-          title: 'تم تسجيل الدخول بنجاح',
-          description: 'جاري التوجيه إلى لوحة التحكم...',
+          title: t.auth.loginSuccess,
+          description: t.auth.redirecting,
         });
 
       } else {
@@ -155,9 +158,9 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
         if (signUpError) {
           toast({
-            title: 'خطأ في إنشاء الحساب',
+            title: t.auth.accountError,
             description: signUpError.message === 'User already registered'
-              ? 'البريد الإلكتروني مسجل مسبقاً - جرب تسجيل الدخول بدلاً من ذلك'
+              ? t.auth.emailAlreadyRegistered
               : signUpError.message,
             variant: 'destructive',
           });
@@ -176,8 +179,8 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             // If role insertion fails, we should sign out and notify user
             await supabase.auth.signOut();
             toast({
-              title: 'خطأ',
-              description: 'فشل إنشاء الحساب - يرجى المحاولة مرة أخرى',
+              title: t.common.error,
+              description: t.auth.accountError,
               variant: 'destructive',
             });
             setLoading(false);
@@ -219,24 +222,24 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             await supabase.auth.signOut();
             
             toast({
-              title: 'تم إرسال طلب التسجيل',
-              description: 'طلب التسجيل قيد المراجعة. يرجى انتظار موافقة المدير.',
+              title: t.auth.registrationSent,
+              description: t.auth.waitingApproval,
             });
             setLoading(false);
             return;
           }
 
           toast({
-            title: 'تم إنشاء الحساب بنجاح',
-            description: `تم تسجيلك كـ${role === 'admin' ? 'مدير' : 'أستاذ'} - جاري التوجيه...`,
+            title: t.auth.signupSuccess,
+            description: `${t.auth.registeredAs}${role === 'admin' ? t.roles.admin : t.roles.teacher} - ${t.auth.redirecting}`,
           });
         }
       }
     } catch (error) {
       console.error('Auth error:', error);
       toast({
-        title: 'خطأ',
-        description: 'حدث خطأ غير متوقع',
+        title: t.common.error,
+        description: t.admin.unexpectedError,
         variant: 'destructive',
       });
     } finally {
@@ -244,14 +247,14 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     }
   };
 
-  const roleTitle = role === 'admin' ? 'المدير' : 'الأستاذ';
+  const roleTitle = role === 'admin' ? t.roles.admin : t.roles.teacher;
   const roleIcon = role === 'admin' ? '🔐' : '📚';
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
+      initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
+      exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
       className="w-full max-w-md mx-auto"
     >
       <Button
@@ -259,18 +262,18 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         onClick={onBack}
         className="mb-6 text-muted-foreground hover:text-foreground"
       >
-        <ArrowRight className="w-4 h-4 ml-2" />
-        العودة
+        <ArrowRight className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2 rotate-180'}`} />
+        {t.common.back}
       </Button>
 
       <div className="glass rounded-2xl p-8 border border-border/50 shadow-lg">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">{roleIcon}</div>
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
+            {isLogin ? t.auth.login : t.auth.signup}
           </h2>
           <p className="text-muted-foreground">
-            {isLogin ? `مرحباً بعودتك ${roleTitle}` : `انضم إلينا كـ${roleTitle}`}
+            {isLogin ? `${t.auth.welcomeBack} ${roleTitle}` : `${t.auth.joinUs}${roleTitle}`}
           </p>
         </div>
 
@@ -286,7 +289,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               <div>
                 <p className="font-medium text-destructive text-sm">{roleError}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  تأكد من اختيار الدور الصحيح أو استخدم حساباً آخر
+                  {t.auth.ensureCorrectRole}
                 </p>
               </div>
             </div>
@@ -296,15 +299,15 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-foreground">الاسم الكامل</Label>
+              <Label htmlFor="fullName" className="text-foreground">{t.auth.fullName}</Label>
               <div className="relative">
-                <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <User className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                 <Input
                   id="fullName"
                   value={formData.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
-                  className="pr-10 bg-background/50"
-                  placeholder="أدخل اسمك الكامل"
+                  className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
+                  placeholder={t.auth.fullName}
                 />
               </div>
               {errors.fullName && <p className="text-destructive text-sm">{errors.fullName}</p>}
@@ -312,15 +315,15 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">البريد الإلكتروني</Label>
+            <Label htmlFor="email" className="text-foreground">{t.auth.email}</Label>
             <div className="relative">
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Mail className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
-                className="pr-10 bg-background/50"
+                className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
                 placeholder="example@email.com"
                 dir="ltr"
               />
@@ -329,22 +332,22 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground">كلمة السر</Label>
+            <Label htmlFor="password" className="text-foreground">{t.auth.password}</Label>
             <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Lock className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
-                className="pr-10 pl-10 bg-background/50"
+                className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} bg-background/50`}
                 placeholder="••••••••"
                 dir="ltr"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground`}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -355,22 +358,22 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           {/* Secret Code Field - Required for Admin */}
           {role === 'admin' && (
             <div className="space-y-2">
-              <Label htmlFor="secretCode" className="text-foreground">الرمز السري</Label>
+              <Label htmlFor="secretCode" className="text-foreground">{t.auth.secretCode}</Label>
               <div className="relative">
-                <KeyRound className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <KeyRound className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                 <Input
                   id="secretCode"
                   type="password"
                   value={formData.secretCode}
                   onChange={(e) => handleChange('secretCode', e.target.value)}
-                  className="pr-10 bg-background/50"
-                  placeholder="أدخل الرمز السري للمدير"
+                  className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
+                  placeholder={t.auth.secretCode}
                   dir="ltr"
                 />
               </div>
               {errors.secretCode && <p className="text-destructive text-sm">{errors.secretCode}</p>}
               <p className="text-xs text-muted-foreground">
-                الرمز السري مطلوب للوصول إلى واجهة المدير
+                {t.auth.secretCodeRequired}
               </p>
             </div>
           )}
@@ -378,15 +381,15 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           {!isLogin && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-foreground">تأكيد كلمة السر</Label>
+                <Label htmlFor="confirmPassword" className="text-foreground">{t.auth.confirmPassword}</Label>
                 <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Lock className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                    className="pr-10 bg-background/50"
+                    className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
                     placeholder="••••••••"
                     dir="ltr"
                   />
@@ -396,15 +399,15 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
               {role === 'admin' && (
                 <div className="space-y-2">
-                  <Label htmlFor="institutionName" className="text-foreground">اسم المؤسسة</Label>
+                  <Label htmlFor="institutionName" className="text-foreground">{t.settings.institution}</Label>
                   <div className="relative">
-                    <Building className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Building className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                     <Input
                       id="institutionName"
                       value={formData.institutionName}
                       onChange={(e) => handleChange('institutionName', e.target.value)}
-                      className="pr-10 bg-background/50"
-                      placeholder="اسم الثانوية"
+                      className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
+                      placeholder={t.settings.institution}
                     />
                   </div>
                   {errors.institutionName && <p className="text-destructive text-sm">{errors.institutionName}</p>}
@@ -413,11 +416,11 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
               {role === 'teacher' && (
                 <div className="space-y-2">
-                  <Label htmlFor="subject" className="text-foreground">المادة</Label>
+                  <Label htmlFor="subject" className="text-foreground">{t.settings.subject}</Label>
                   <Select value={formData.subject} onValueChange={(value) => handleChange('subject', value)}>
                     <SelectTrigger className="bg-background/50">
-                      <BookOpen className="w-4 h-4 ml-2 text-muted-foreground" />
-                      <SelectValue placeholder="اختر المادة" />
+                      <BookOpen className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} text-muted-foreground`} />
+                      <SelectValue placeholder={t.settings.subject} />
                     </SelectTrigger>
                     <SelectContent>
                       {SUBJECTS.map((subject) => (
@@ -435,14 +438,11 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
           <Button
             type="submit"
-            className="w-full gradient-primary text-primary-foreground font-semibold py-6 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+            className="w-full gradient-primary shadow-lg"
             disabled={loading}
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              isLogin ? 'تسجيل الدخول' : 'إنشاء الحساب'
-            )}
+            {loading && <Loader2 className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'} animate-spin`} />}
+            {isLogin ? t.auth.login : t.auth.signup}
           </Button>
         </form>
 
@@ -454,26 +454,14 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               setErrors({});
               setRoleError(null);
             }}
-            className="text-primary hover:underline text-sm"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            {isLogin ? 'ليس لديك حساب؟ أنشئ حساباً جديداً' : 'لديك حساب؟ سجل الدخول'}
+            {isLogin ? t.auth.noAccount : t.auth.alreadyHaveAccount}{' '}
+            <span className="text-primary font-medium">
+              {isLogin ? t.auth.signup : t.auth.login}
+            </span>
           </button>
         </div>
-
-        {/* Role binding notice for signup */}
-        {!isLogin && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-4 p-3 bg-muted/50 rounded-lg"
-          >
-            <p className="text-xs text-muted-foreground text-center">
-              {role === 'teacher' 
-                ? '⏳ ملاحظة: سيتم مراجعة طلب التسجيل من قبل المدير قبل تفعيل الحساب.'
-                : '⚠️ ملاحظة: سيتم ربط حسابك بشكل دائم بدور المدير. لا يمكن تغيير الدور بعد إنشاء الحساب.'}
-            </p>
-          </motion.div>
-        )}
       </div>
     </motion.div>
   );
