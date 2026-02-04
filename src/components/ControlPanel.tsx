@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TeacherRequest {
   id: string;
@@ -23,6 +24,7 @@ interface ControlPanelProps {
 
 export const ControlPanel = ({ onClose }: ControlPanelProps) => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [teachers, setTeachers] = useState<TeacherRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
 
     if (error) {
       console.error('Error fetching teachers:', error);
-      toast({ title: 'خطأ', description: 'فشل تحميل قائمة الأساتذة', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.controlPanel.loadError, variant: 'destructive' });
     } else {
       setTeachers(data || []);
     }
@@ -57,11 +59,11 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
 
     if (error) {
       console.error('Error updating status:', error);
-      toast({ title: 'خطأ', description: 'فشل تحديث الحالة', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.controlPanel.statusUpdateError, variant: 'destructive' });
     } else {
       toast({ 
-        title: newStatus === 'approved' ? 'تم القبول' : 'تم الرفض', 
-        description: newStatus === 'approved' ? 'تم تفعيل حساب الأستاذ بنجاح' : 'تم رفض طلب التسجيل'
+        title: newStatus === 'approved' ? t.teacher.accept : t.teacher.reject, 
+        description: newStatus === 'approved' ? t.controlPanel.accountActivated : t.controlPanel.registrationRejected
       });
       await fetchTeachers();
     }
@@ -71,11 +73,11 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30"><Clock className="w-3 h-3 ml-1" /> في الانتظار</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30"><Clock className="w-3 h-3 ml-1" /> {t.admin.pending}</Badge>;
       case 'approved':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30"><Check className="w-3 h-3 ml-1" /> مفعّل</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30"><Check className="w-3 h-3 ml-1" /> {t.controlPanel.activated}</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30"><XIcon className="w-3 h-3 ml-1" /> مرفوض</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30"><XIcon className="w-3 h-3 ml-1" /> {t.admin.rejected}</Badge>;
       default:
         return null;
     }
@@ -106,8 +108,8 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
               <Users className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">لوحة التحكم</h2>
-              <p className="text-sm text-muted-foreground">إدارة طلبات تسجيل الأساتذة</p>
+              <h2 className="text-xl font-bold">{t.controlPanel.title}</h2>
+              <p className="text-sm text-muted-foreground">{t.controlPanel.subtitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -132,13 +134,13 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Clock className="w-5 h-5 text-yellow-500" />
-                  طلبات في الانتظار ({pendingTeachers.length})
+                  {t.controlPanel.pendingRequests} ({pendingTeachers.length})
                 </h3>
                 
                 {pendingTeachers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg">
                     <Check className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>لا توجد طلبات معلقة</p>
+                    <p>{t.controlPanel.noPendingRequests}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -156,13 +158,13 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                               {getStatusBadge(teacher.status)}
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {teacher.subject} • {teacher.email || 'بدون بريد'}
+                              {teacher.subject} • {teacher.email || t.controlPanel.noEmail}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              رقم التعريف: {teacher.teacher_id}
+                              {t.controlPanel.teacherId}: {teacher.teacher_id}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              تاريخ التسجيل: {new Date(teacher.created_at).toLocaleDateString('ar-DZ')}
+                              {t.controlPanel.registrationDate}: {new Date(teacher.created_at).toLocaleDateString('ar-DZ')}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -178,7 +180,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                               ) : (
                                 <>
                                   <XIcon className="w-4 h-4 ml-1" />
-                                  رفض
+                                  {t.teacher.reject}
                                 </>
                               )}
                             </Button>
@@ -193,7 +195,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                               ) : (
                                 <>
                                   <Check className="w-4 h-4 ml-1" />
-                                  قبول
+                                  {t.teacher.accept}
                                 </>
                               )}
                             </Button>
@@ -209,13 +211,13 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  جميع الأساتذة ({teachers.length})
+                  {t.controlPanel.allTeachers} ({teachers.length})
                 </h3>
                 
                 {otherTeachers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg">
                     <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>لا يوجد أساتذة مسجلين</p>
+                    <p>{t.controlPanel.noTeachersRegistered}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -230,7 +232,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                             {getStatusBadge(teacher.status)}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {teacher.subject} • {teacher.email || 'بدون بريد'}
+                            {teacher.subject} • {teacher.email || t.controlPanel.noEmail}
                           </p>
                         </div>
                         {teacher.status === 'rejected' && (
@@ -243,7 +245,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                             {processingId === teacher.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              'إعادة تفعيل'
+                              t.controlPanel.reactivate
                             )}
                           </Button>
                         )}
@@ -258,7 +260,7 @@ export const ControlPanel = ({ onClose }: ControlPanelProps) => {
                             {processingId === teacher.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              'تعطيل'
+                              t.controlPanel.deactivate
                             )}
                           </Button>
                         )}

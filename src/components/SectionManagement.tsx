@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +30,7 @@ interface SectionManagementProps {
 
 export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManagementProps) => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
 
   const handleSave = async () => {
     if (!editName.trim()) {
-      toast({ title: 'تنبيه', description: 'اسم القسم مطلوب', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.admin.sectionNameRequired, variant: 'destructive' });
       return;
     }
 
@@ -55,9 +57,9 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
 
     if (error) {
       console.error('Error updating section:', error);
-      toast({ title: 'خطأ', description: 'فشل تحديث اسم القسم', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.sectionManagement.updateError, variant: 'destructive' });
     } else {
-      toast({ title: 'تم بنجاح', description: 'تم تحديث اسم القسم' });
+      toast({ title: t.common.success, description: t.sectionManagement.sectionUpdated });
       onUpdate({ ...section, name: editName.trim() });
       setIsEditing(false);
     }
@@ -66,7 +68,19 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
   const handleDelete = async () => {
     setIsLoading(true);
     
-    // Delete all related assignments first
+    // Delete all related timetables
+    await supabase
+      .from('timetables')
+      .delete()
+      .eq('section_id', section.id);
+
+    // Delete all related students
+    await supabase
+      .from('students')
+      .delete()
+      .eq('section_id', section.id);
+
+    // Delete all related assignments
     await supabase
       .from('teacher_assignments')
       .delete()
@@ -89,9 +103,9 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
 
     if (error) {
       console.error('Error deleting section:', error);
-      toast({ title: 'خطأ', description: 'فشل حذف القسم', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.sectionManagement.deleteError, variant: 'destructive' });
     } else {
-      toast({ title: 'تم الحذف', description: 'تم حذف القسم بنجاح' });
+      toast({ title: t.common.success, description: t.sectionManagement.sectionDeleted });
       onDelete(section.id);
     }
   };
@@ -121,7 +135,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
           onClick={handleSave}
           disabled={isLoading}
         >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-success" />}
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-green-600" />}
         </Button>
         <Button 
           variant="ghost" 
@@ -165,23 +179,23 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>حذف القسم</AlertDialogTitle>
+            <AlertDialogTitle>{t.sectionManagement.deleteSection}</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف القسم "{section.name}"؟
+              {t.sectionManagement.deleteConfirm.replace('this section', `"${section.name}"`)}
               <br />
               <span className="text-destructive font-medium">
-                سيتم حذف جميع الدروس وإسنادات الأساتذة المرتبطة بهذا القسم.
+                {t.sectionManagement.deleteWarning}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
               className="bg-destructive hover:bg-destructive/90"
               disabled={isLoading}
             >
-              {isLoading ? 'جاري الحذف...' : 'حذف'}
+              {isLoading ? t.common.saving : t.common.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

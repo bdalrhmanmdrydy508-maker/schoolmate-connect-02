@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '@/assets/logo.png';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LoadingScreenProps {
   onComplete?: () => void;
@@ -15,7 +16,28 @@ const LoadingScreen = ({
 }: LoadingScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [loadingText, setLoadingText] = useState('جاري التحميل');
+  const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  
+  // Safe language access - may not be available yet
+  let t: any;
+  try {
+    const lang = useLanguage();
+    t = lang.t;
+  } catch {
+    t = null;
+  }
+  
+  const loadingTexts = t ? [
+    t.common.loading,
+    t.common.verifyingAccount,
+    t.common.preparingDashboard,
+    t.common.ready,
+  ] : [
+    'جاري التحميل',
+    'التحقق من الحساب',
+    'تحضير لوحة التحكم',
+    'جاهز للانطلاق',
+  ];
 
   useEffect(() => {
     const startTime = Date.now();
@@ -29,13 +51,13 @@ const LoadingScreen = ({
       
       // Update loading text based on progress
       if (newProgress < 30) {
-        setLoadingText('جاري التحميل');
+        setLoadingTextIndex(0);
       } else if (newProgress < 60) {
-        setLoadingText('التحقق من الحساب');
+        setLoadingTextIndex(1);
       } else if (newProgress < 90) {
-        setLoadingText('تحضير لوحة التحكم');
+        setLoadingTextIndex(2);
       } else {
-        setLoadingText('جاهز للانطلاق');
+        setLoadingTextIndex(3);
       }
       
       if (newProgress >= 100) {
@@ -54,6 +76,10 @@ const LoadingScreen = ({
       clearTimeout(minTimer);
     };
   }, [minDuration, maxDuration, onComplete]);
+
+  const versionText = t ? t.common.version : 'الإصدار';
+  const appName = t ? t.common.appName : 'SmartNotebook';
+  const appSubtitle = t ? t.common.appSubtitle : 'دفتر القسم الذكي';
 
   return (
     <AnimatePresence>
@@ -93,7 +119,7 @@ const LoadingScreen = ({
             <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150" />
             <motion.img 
               src={logo} 
-              alt="SmartNotebook" 
+              alt={appName}
               className="relative w-28 h-28 object-contain drop-shadow-2xl"
               animate={{ 
                 rotate: [0, 5, -5, 0],
@@ -113,7 +139,7 @@ const LoadingScreen = ({
             transition={{ delay: 0.3, duration: 0.5 }}
             className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2"
           >
-            SmartNotebook
+            {appName}
           </motion.h1>
 
           {/* Subtitle */}
@@ -123,7 +149,7 @@ const LoadingScreen = ({
             transition={{ delay: 0.4, duration: 0.5 }}
             className="text-muted-foreground text-sm mb-10"
           >
-            دفتر القسم الذكي
+            {appSubtitle}
           </motion.p>
 
           {/* Loading Animation - Elegant Progress Bar */}
@@ -182,14 +208,14 @@ const LoadingScreen = ({
 
           {/* Loading Text */}
           <motion.p
-            key={loadingText}
+            key={loadingTextIndex}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.3 }}
             className="text-muted-foreground/70 text-xs mt-4"
           >
-            {loadingText}...
+            {loadingTexts[loadingTextIndex]}...
           </motion.p>
 
           {/* Version */}
@@ -199,7 +225,7 @@ const LoadingScreen = ({
             transition={{ delay: 1, duration: 0.5 }}
             className="absolute bottom-6 text-muted-foreground/50 text-xs"
           >
-            الإصدار 1.0.0
+            {versionText} 1.0.0
           </motion.p>
         </motion.div>
       )}
