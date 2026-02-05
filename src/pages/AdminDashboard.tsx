@@ -15,6 +15,7 @@ import { AdminSettings } from '@/components/AdminSettings';
 import { SectionManagement } from '@/components/SectionManagement';
 import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AdminProfile {
   full_name: string;
@@ -70,6 +71,7 @@ interface Lesson {
   file_url: string | null;
   lesson_date: string;
   created_at: string;
+  duration?: string | null;
 }
 
 const BRANCHES_DATA: Record<string, { literary: string[]; scientific: string[] }> = {
@@ -106,6 +108,7 @@ const SUBJECT_ICONS: Record<string, string> = {
 const AdminDashboard = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [levels, setLevels] = useState<Level[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -131,6 +134,25 @@ const AdminDashboard = () => {
   const [isAssigningTeacher, setIsAssigningTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [lessonSearchQuery, setLessonSearchQuery] = useState('');
+
+  // Filter lessons based on search query
+  const filteredLessons = lessons.filter(lesson =>
+    lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
+  );
+
+  // Format database date to DD/MM/YYYY for display
+  const formatDateForDisplay = (dateStr: string): string => {
+    try {
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -215,7 +237,7 @@ const AdminDashboard = () => {
   const fetchLessons = useCallback(async (sectionId: string, teacherId: string) => {
     const { data, error } = await supabase
       .from('lessons')
-      .select('id, title, description, file_url, lesson_date, created_at')
+      .select('id, title, description, file_url, lesson_date, created_at, duration')
       .eq('section_id', sectionId)
       .eq('teacher_id', teacherId)
       .order('lesson_date', { ascending: false });
@@ -451,6 +473,7 @@ const AdminDashboard = () => {
       setSelectedTeacherAssignment(null);
       setLessons([]);
       setSelectedLesson(null);
+      setLessonSearchQuery('');
     } else if (currentView === 'section-detail') {
       setCurrentView('sections');
       setSelectedSection(null);
@@ -588,9 +611,17 @@ const AdminDashboard = () => {
           </DialogHeader>
           {selectedLesson && (
             <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>{new Date(selectedLesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+              <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{formatDateForDisplay(selectedLesson.lesson_date)}</span>
+                </div>
+                {selectedLesson.duration && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{selectedLesson.duration}</span>
+                  </div>
+                )}
               </div>
               
               {selectedLesson.description && (
@@ -610,7 +641,7 @@ const AdminDashboard = () => {
                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
-                    فتح ملف الدرس
+                    {t.admin.openLessonFile}
                   </a>
                 </div>
               )}
@@ -1058,50 +1089,80 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+                <Input
+                  value={lessonSearchQuery}
+                  onChange={(e) => setLessonSearchQuery(e.target.value)}
+                  placeholder={t.teacher.searchLessons}
+                  className={isRTL ? "pr-10" : "pl-10"}
+                />
+              </div>
+
               {/* Lessons List */}
               <div className="space-y-4">
                 <h3 className="text-xl font-bold flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  الدروس والحصص ({lessons.length})
+                  {t.teacher.lessonsAndSessions} ({filteredLessons.length})
                 </h3>
                 
                 {lessons.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {lessons.map((lesson, index) => (
-                      <motion.button
-                        key={lesson.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        onClick={() => setSelectedLesson(lesson)}
-                        className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all text-right"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-6 h-6 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-lg truncate">{lesson.title}</h4>
-                            {lesson.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {lesson.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span>{new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+                  filteredLessons.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredLessons.map((lesson, index) => (
+                        <motion.button
+                          key={lesson.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => setSelectedLesson(lesson)}
+                          className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all text-right"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-6 h-6 text-primary" />
                             </div>
-                            {lesson.file_url && (
-                              <Badge variant="outline" className="mt-2 text-xs">
-                                <FileText className="w-3 h-3 ml-1" />
-                                ملف مرفق
-                              </Badge>
-                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-lg truncate">{lesson.title}</h4>
+                              {lesson.description && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {lesson.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  <span>{formatDateForDisplay(lesson.lesson_date)}</span>
+                                </div>
+                                {lesson.duration && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span>{lesson.duration}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {lesson.file_url && (
+                                <Badge variant="outline" className="mt-2 text-xs">
+                                  <FileText className="w-3 h-3 ml-1" />
+                                  {t.teacher.fileSelected}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-12 bg-card rounded-xl border border-border/50"
+                    >
+                      <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                      <p className="text-muted-foreground">{t.teacher.noLessonsFound}</p>
+                    </motion.div>
+                  )
                 ) : (
                   <motion.div 
                     initial={{ opacity: 0 }}
@@ -1109,8 +1170,8 @@ const AdminDashboard = () => {
                     className="text-center py-16 bg-card rounded-xl border border-border/50"
                   >
                     <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-muted-foreground text-lg">لا توجد دروس مرفوعة بعد</p>
-                    <p className="text-muted-foreground/60 text-sm mt-1">الأستاذ لم يرفع أي درس لهذه المادة</p>
+                    <p className="text-muted-foreground text-lg">{t.admin.noLessonsYet}</p>
+                    <p className="text-muted-foreground/60 text-sm mt-1">{t.admin.noLessonsNote}</p>
                   </motion.div>
                 )}
               </div>

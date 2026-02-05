@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +17,7 @@ import { TeacherFiles } from '@/components/TeacherFiles';
 import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { Progress } from '@/components/ui/progress';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TeacherProfile {
   id: string;
@@ -42,11 +43,13 @@ interface Lesson {
   description: string;
   lesson_date: string;
   file_url: string | null;
+  duration?: string | null;
 }
 
 const TeacherDashboard = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
@@ -55,11 +58,13 @@ const TeacherDashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students'>('lessons');
+  const [lessonSearchQuery, setLessonSearchQuery] = useState('');
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonDescription, setLessonDescription] = useState('');
   const [lessonDate, setLessonDate] = useState('');
+  const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -137,12 +142,43 @@ const TeacherDashboard = () => {
 
     const { data } = await supabase
       .from('lessons')
-      .select('*')
+      .select('*, duration')
       .eq('section_id', selectedSection.section_id)
       .eq('teacher_id', profile.id)
       .order('lesson_date', { ascending: false });
 
     if (data) setLessons(data);
+  };
+
+  // Filter lessons based on search query
+  const filteredLessons = lessons.filter(lesson =>
+    lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
+  );
+
+  // Parse manual date format DD/MM/YYYY to YYYY-MM-DD for database
+  const parseManualDate = (dateStr: string): string | null => {
+    const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = dateStr.match(regex);
+    if (!match) return null;
+    const [, day, month, year] = match;
+    const d = parseInt(day, 10);
+    const m = parseInt(month, 10);
+    const y = parseInt(year, 10);
+    if (d < 1 || d > 31 || m < 1 || m > 12 || y < 2000 || y > 2100) return null;
+    return `${year}-${month}-${day}`;
+  };
+
+  // Format database date to DD/MM/YYYY for display
+  const formatDateForDisplay = (dateStr: string): string => {
+    try {
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
   };
 
   const handleAssignmentResponse = async (assignmentId: string, accept: boolean) => {
@@ -185,7 +221,14 @@ const TeacherDashboard = () => {
 
   const handleAddLesson = async () => {
     if (!selectedSection || !profile || !lessonTitle || !lessonDate) {
-      toast({ title: 'تنبيه', description: 'يرجى ملء الحقول المطلوبة (العنوان والتاريخ)', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.teacher.fillRequiredFields, variant: 'destructive' });
+      return;
+    }
+
+    // Validate and parse the manual date
+    const parsedDate = parseManualDate(lessonDate);
+    if (!parsedDate) {
+      toast({ title: t.common.warning, description: t.teacher.invalidDateFormat, variant: 'destructive' });
       return;
     }
 
@@ -214,7 +257,7 @@ const TeacherDashboard = () => {
 
         if (uploadError) {
           console.error('Storage upload error:', uploadError);
-          throw new Error(`فشل رفع الملف: ${uploadError.message}`);
+          throw new Error(`${t.teacher.uploadError}: ${uploadError.message}`);
         }
 
         setUploadProgress(70);
@@ -227,7 +270,7 @@ const TeacherDashboard = () => {
         setUploadProgress(85);
       }
 
-      // Insert lesson
+      // Insert lesson with duration
       const { error } = await supabase
         .from('lessons')
         .insert({
@@ -235,8 +278,9 @@ const TeacherDashboard = () => {
           section_id: selectedSection.section_id,
           title: lessonTitle,
           description: lessonDescription,
-          lesson_date: lessonDate,
+          lesson_date: parsedDate,
           file_url: fileUrl,
+          duration: lessonDuration || null,
         });
 
       if (error) {
@@ -251,18 +295,19 @@ const TeacherDashboard = () => {
       }
 
       setUploadProgress(100);
-      toast({ title: 'تم بنجاح ✓', description: 'تم إضافة الدرس/الحصة بنجاح' });
+      toast({ title: t.common.success, description: t.teacher.lessonAdded });
       
       // Reset form
       setLessonTitle('');
       setLessonDescription('');
       setLessonDate('');
+      setLessonDuration('');
       setLessonFile(null);
       setIsAddingLesson(false);
       fetchLessons();
     } catch (error: any) {
       console.error('Lesson add error:', error);
-      toast({ title: 'خطأ', description: error.message || 'فشل إضافة الدرس', variant: 'destructive' });
+      toast({ title: t.common.error, description: error.message || t.teacher.lessonError, variant: 'destructive' });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -327,9 +372,17 @@ const TeacherDashboard = () => {
           </DialogHeader>
           {selectedLesson && (
             <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>{new Date(selectedLesson.lesson_date).toLocaleDateString('ar-DZ')}</span>
+              <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{formatDateForDisplay(selectedLesson.lesson_date)}</span>
+                </div>
+                {selectedLesson.duration && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{selectedLesson.duration}</span>
+                  </div>
+                )}
               </div>
               
               {selectedLesson.description && (
@@ -349,7 +402,7 @@ const TeacherDashboard = () => {
                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <FileText className="w-4 h-4" />
-                    فتح ملف الدرس
+                    {t.admin.openLessonFile}
                   </a>
                 </div>
               )}
@@ -421,8 +474,8 @@ const TeacherDashboard = () => {
                 className="space-y-6"
               >
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); }}>
-                    العودة للأقسام
+                  <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}>
+                    {t.teacher.backToSections}
                   </Button>
                   <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
                 </div>
@@ -432,53 +485,63 @@ const TeacherDashboard = () => {
                     <DialogTrigger asChild>
                       <Button className="h-24 flex-col gap-2 gradient-primary">
                         <Upload className="w-6 h-6" />
-                        إضافة درس / حصة
+                        {t.teacher.addLesson}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-lg">
                       <DialogHeader>
-                        <DialogTitle>إضافة درس / حصة جديدة</DialogTitle>
+                        <DialogTitle>{t.teacher.addNewLesson}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <Heading1 className="w-4 h-4" />
-                            عنوان الدرس / الحصة *
+                            {t.teacher.lessonTitle} *
                           </Label>
                           <Input
                             value={lessonTitle}
                             onChange={(e) => setLessonTitle(e.target.value)}
-                            placeholder="مثال: الفصل الأول - المعادلات"
+                            placeholder={t.teacher.lessonTitleExample}
                           />
                         </div>
                         
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            تاريخ الحصة *
+                            {t.teacher.lessonDate} * ({t.teacher.lessonDateFormat})
                           </Label>
                           <Input
-                            type="date"
+                            type="text"
                             value={lessonDate}
                             onChange={(e) => setLessonDate(e.target.value)}
+                            placeholder={t.teacher.lessonDatePlaceholder}
+                            dir="ltr"
+                            className="text-left"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {t.teacher.lessonDuration}
+                          </Label>
+                          <Input
+                            type="text"
+                            value={lessonDuration}
+                            onChange={(e) => setLessonDuration(e.target.value)}
+                            placeholder={t.teacher.lessonDurationPlaceholder}
                           />
                         </div>
                         
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <List className="w-4 h-4" />
-                            محتوى الدرس (نص كامل مع عناوين فرعية)
+                            {t.teacher.lessonDescription}
                           </Label>
                           <Textarea
                             value={lessonDescription}
                             onChange={(e) => setLessonDescription(e.target.value)}
-                            placeholder={`أدخل محتوى الدرس هنا...
-
-يمكنك كتابة:
-• عناوين فرعية
-• فقرات مفصلة
-• نقاط مهمة
-• ملاحظات للتلاميذ`}
+                            placeholder={t.teacher.lessonDescriptionPlaceholder}
                             className="min-h-[200px] resize-y"
                           />
                         </div>
@@ -486,7 +549,7 @@ const TeacherDashboard = () => {
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <FileUp className="w-4 h-4" />
-                            ملف الدرس (جميع الصيغ) - اختياري
+                            {t.teacher.attachFile}
                           </Label>
                           <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
                             <input
@@ -504,7 +567,7 @@ const TeacherDashboard = () => {
                               {lessonFile ? (
                                 <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
                               ) : (
-                                <span className="text-sm text-muted-foreground">اضغط لاختيار ملف</span>
+                                <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
                               )}
                             </label>
                           </div>
@@ -515,7 +578,7 @@ const TeacherDashboard = () => {
                               onClick={() => setLessonFile(null)}
                               className="text-destructive"
                             >
-                              إزالة الملف
+                              {t.common.delete}
                             </Button>
                           )}
                         </div>
@@ -523,7 +586,7 @@ const TeacherDashboard = () => {
                         {isUploading && (
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">جاري الرفع...</span>
+                              <span className="text-muted-foreground">{t.teacher.addingLesson}</span>
                               <span className="font-medium">{uploadProgress}%</span>
                             </div>
                             <Progress value={uploadProgress} className="h-2" />
@@ -538,9 +601,9 @@ const TeacherDashboard = () => {
                           {isUploading ? (
                             <div className="flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>جاري الرفع...</span>
+                              <span>{t.teacher.addingLesson}</span>
                             </div>
-                          ) : 'إضافة الدرس'}
+                          ) : t.teacher.addLesson}
                         </Button>
                       </div>
                     </DialogContent>
@@ -552,7 +615,7 @@ const TeacherDashboard = () => {
                     onClick={() => setActiveView('timetable')}
                   >
                     <Clock className="w-6 h-6" />
-                    الاستعمال الزمني
+                    {t.admin.timetable}
                   </Button>
 
                   <Button 
@@ -561,12 +624,12 @@ const TeacherDashboard = () => {
                     onClick={() => setActiveView('students')}
                   >
                     <Users className="w-6 h-6" />
-                    قائمة التلاميذ
+                    {t.admin.studentList}
                   </Button>
 
                   <Button variant="outline" className="h-24 flex-col gap-2">
                     <ClipboardList className="w-6 h-6" />
-                    النقاط والغيابات
+                    {t.timetable.title}
                   </Button>
                 </div>
 
@@ -591,16 +654,31 @@ const TeacherDashboard = () => {
 
                 {activeView === 'lessons' && (
                   <>
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+                      <Input
+                        value={lessonSearchQuery}
+                        onChange={(e) => setLessonSearchQuery(e.target.value)}
+                        placeholder={t.teacher.searchLessons}
+                        className={isRTL ? "pr-10" : "pl-10"}
+                      />
+                    </div>
+
                     {/* Lessons list */}
                     <div className="space-y-4">
-                      <h3 className="font-semibold">الدروس والحصص</h3>
+                      <h3 className="font-semibold">{t.teacher.lessonsAndSessions}</h3>
                       {lessons.length === 0 ? (
                         <p className="text-muted-foreground text-center py-8">
-                          لا توجد دروس بعد
+                          {t.teacher.noLessonsYet}
+                        </p>
+                      ) : filteredLessons.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          {t.teacher.noLessonsFound}
                         </p>
                       ) : (
                         <div className="space-y-3">
-                          {lessons.map((lesson) => (
+                          {filteredLessons.map((lesson) => (
                             <motion.button
                               key={lesson.id}
                               onClick={() => setSelectedLesson(lesson)}
@@ -610,7 +688,7 @@ const TeacherDashboard = () => {
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold">{lesson.title}</h4>
                                 <span className="text-sm text-muted-foreground">
-                                  {new Date(lesson.lesson_date).toLocaleDateString('ar-DZ')}
+                                  {formatDateForDisplay(lesson.lesson_date)}
                                 </span>
                               </div>
                               {lesson.description && (
@@ -618,11 +696,17 @@ const TeacherDashboard = () => {
                                   {lesson.description}
                                 </p>
                               )}
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {lesson.duration && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Clock className="w-3 h-3 ml-1" />
+                                    {lesson.duration}
+                                  </Badge>
+                                )}
                                 {lesson.file_url && (
                                   <Badge variant="outline" className="text-xs">
                                     <FileText className="w-3 h-3 ml-1" />
-                                    ملف مرفق
+                                    {t.teacher.fileSelected}
                                   </Badge>
                                 )}
                               </div>
