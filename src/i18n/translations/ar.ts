@@ -101,7 +101,7 @@ export const ar = {
     subject: 'المادة',
     phone: 'رقم الهاتف',
     editRestricted: 'تعديل البيانات مقيّد',
-    editRestrictionNote: 'يُسمح بتعديل البيانات الشخصية مرة واحدة كل 60 يوماً.',
+    editRestrictionNote: 'يُسمح بتعديل البيانات الشخصية مرة واحدة كل 14 يوماً.',
     daysRemaining: 'متبقي {days} يوم',
     editAvailableIn: 'التعديل متاح بعد {days} يوم',
     notAllowed: 'غير مسموح',

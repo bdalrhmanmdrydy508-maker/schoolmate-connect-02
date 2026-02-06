@@ -101,7 +101,7 @@ export const en = {
     subject: 'Subject',
     phone: 'Phone Number',
     editRestricted: 'Editing is restricted',
-    editRestrictionNote: 'Personal data can only be edited once every 60 days.',
+    editRestrictionNote: 'Personal data can only be edited once every 14 days.',
     daysRemaining: '{days} days remaining',
     editAvailableIn: 'Edit available in {days} days',
     notAllowed: 'Not allowed',

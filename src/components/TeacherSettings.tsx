@@ -52,7 +52,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange, onProfileUpda
     theme: 'system',
   });
 
-  const EDIT_COOLDOWN_DAYS = 60;
+  const EDIT_COOLDOWN_DAYS = 14;
 
   // Calculate days remaining until next edit is allowed
   const getDaysRemaining = () => {
@@ -85,7 +85,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange, onProfileUpda
       
       if (data) {
         setSettings({
-          language: data.language || 'ar',
+          language: data.language || 'fr',
           font_size: data.font_size || 'medium',
           theme: data.theme || 'system',
         });
@@ -197,7 +197,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange, onProfileUpda
         value === 'small' ? '14px' : value === 'large' ? '18px' : '16px';
     }
 
-    if (key === 'language' && (value === 'ar' || value === 'en')) {
+    if (key === 'language' && (value === 'fr' || value === 'en')) {
       await setLanguage(value);
     }
 
@@ -455,7 +455,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange, onProfileUpda
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ar">{t.languages.ar}</SelectItem>
+                    <SelectItem value="fr">{t.languages.fr}</SelectItem>
                     <SelectItem value="en">{t.languages.en}</SelectItem>
                   </SelectContent>
                 </Select>
