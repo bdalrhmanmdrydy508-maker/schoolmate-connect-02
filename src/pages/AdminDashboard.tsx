@@ -272,7 +272,7 @@ const AdminDashboard = () => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(levelId)) {
       console.error('Invalid level ID:', levelId);
-      toast({ title: 'خطأ', description: 'معرف المستوى غير صالح', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.levelIdInvalid, variant: 'destructive' });
       return null;
     }
 
@@ -300,25 +300,25 @@ const AdminDashboard = () => {
       
       if (error) {
         console.error('Error creating branch:', error);
-        let errorMessage = 'فشل إنشاء الشعبة';
+        let errorMessage = t.admin.branchCreateError;
         if (error.code === '42501') {
-          errorMessage = 'ليس لديك صلاحية لإنشاء الشعب';
+          errorMessage = t.admin.noPermissionBranch;
         }
-        toast({ title: 'خطأ', description: errorMessage, variant: 'destructive' });
+        toast({ title: t.common.error, description: errorMessage, variant: 'destructive' });
         return null;
       }
 
       return newBranch;
     } catch (err) {
       console.error('Unexpected error in getOrCreateBranch:', err);
-      toast({ title: 'خطأ', description: 'حدث خطأ غير متوقع', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.unexpectedError, variant: 'destructive' });
       return null;
     }
   };
 
   const handleBranchSelect = async (branchName: string) => {
     if (!selectedLevel?.id) {
-      toast({ title: 'خطأ', description: 'لم يتم تحديد المستوى', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.levelNotSelected, variant: 'destructive' });
       return;
     }
     
@@ -336,25 +336,25 @@ const AdminDashboard = () => {
     const sectionName = newSectionName.trim();
     
     if (!sectionName) {
-      toast({ title: 'تنبيه', description: 'يرجى إدخال اسم القسم', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.admin.sectionNameRequired, variant: 'destructive' });
       return;
     }
 
     if (!selectedBranch?.id) {
-      toast({ title: 'خطأ', description: 'لم يتم تحديد الشعبة', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.branchNotSelected, variant: 'destructive' });
       return;
     }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(selectedBranch.id)) {
       console.error('Invalid branch ID:', selectedBranch.id);
-      toast({ title: 'خطأ', description: 'معرف الشعبة غير صالح، يرجى إعادة اختيار الشعبة', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.branchIdInvalid, variant: 'destructive' });
       return;
     }
 
     const existingSection = sections.find(s => s.name.toLowerCase() === sectionName.toLowerCase());
     if (existingSection) {
-      toast({ title: 'تنبيه', description: 'يوجد قسم بهذا الاسم مسبقاً', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.admin.sectionExists, variant: 'destructive' });
       return;
     }
 
@@ -372,26 +372,26 @@ const AdminDashboard = () => {
 
       if (error) {
         console.error('Error adding section:', error);
-        let errorMessage = 'فشل إضافة القسم';
+        let errorMessage = t.admin.sectionAddError;
         
         if (error.code === '23505') {
-          errorMessage = 'يوجد قسم بهذا الاسم مسبقاً';
+          errorMessage = t.admin.sectionExists;
         } else if (error.code === '42501') {
-          errorMessage = 'ليس لديك صلاحية لإضافة أقسام';
+          errorMessage = t.admin.noPermissionSection;
         } else if (error.message) {
           errorMessage = error.message;
         }
         
-        toast({ title: 'خطأ', description: errorMessage, variant: 'destructive' });
+        toast({ title: t.common.error, description: errorMessage, variant: 'destructive' });
       } else if (data) {
-        toast({ title: 'تم بنجاح', description: `تم إضافة القسم "${sectionName}" بنجاح` });
+        toast({ title: t.common.success, description: t.admin.sectionAdded.replace('{name}', sectionName) });
         setSections(prev => [...prev, data]);
         setNewSectionName('');
         setIsAddingSectionOpen(false);
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      toast({ title: 'خطأ', description: 'حدث خطأ غير متوقع', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.unexpectedError, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -399,7 +399,7 @@ const AdminDashboard = () => {
 
   const handleAssignTeacher = async () => {
     if (!selectedSection || !selectedSubjectForAssignment || !selectedTeacherId) {
-      toast({ title: 'تنبيه', description: 'يرجى اختيار الأستاذ', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.admin.selectTeacher, variant: 'destructive' });
       return;
     }
 
@@ -415,7 +415,7 @@ const AdminDashboard = () => {
 
     if (existingAssignment) {
       setIsLoading(false);
-      toast({ title: 'تنبيه', description: 'تم إسناد أستاذ لهذه المادة مسبقاً', variant: 'destructive' });
+      toast({ title: t.common.warning, description: t.admin.alreadyAssigned, variant: 'destructive' });
       return;
     }
 
@@ -434,7 +434,7 @@ const AdminDashboard = () => {
 
     if (!adminProfile) {
       setIsLoading(false);
-      toast({ title: 'خطأ', description: 'لم يتم العثور على ملف المدير', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.adminProfileNotFound, variant: 'destructive' });
       return;
     }
 
@@ -453,9 +453,9 @@ const AdminDashboard = () => {
 
     if (error) {
       console.error('Error assigning teacher:', error);
-      toast({ title: 'خطأ', description: 'فشل إسناد الأستاذ', variant: 'destructive' });
+      toast({ title: t.common.error, description: t.admin.teacherAssignError, variant: 'destructive' });
     } else {
-      toast({ title: 'تم بنجاح', description: 'تم إرسال طلب الإسناد للأستاذ' });
+      toast({ title: t.common.success, description: t.admin.assignmentSent });
       fetchAssignments(selectedSection.id);
       setSelectedTeacherId('');
       setTeacherSearchQuery('');
@@ -519,9 +519,8 @@ const AdminDashboard = () => {
     await fetchLessons(selectedSection!.id, assignment.teacher_id);
   };
 
-  const getLevelIcon = (index: number) => {
-    const icons = ['١', '٢', '٣'];
-    return icons[index] || (index + 1).toString();
+  const getLevelLabel = (levelName: string) => {
+    return levelName;
   };
 
   const getAssignmentForSubject = (subjectId: string) => {
@@ -531,11 +530,11 @@ const AdminDashboard = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30"><Clock className="w-3 h-3 ml-1" /> في الانتظار</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30"><Clock className="w-3 h-3 ml-1" /> {t.admin.pending}</Badge>;
       case 'accepted':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30"><UserCheck className="w-3 h-3 ml-1" /> مقبول</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30"><UserCheck className="w-3 h-3 ml-1" /> {t.admin.accepted}</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30"><X className="w-3 h-3 ml-1" /> مرفوض</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30"><X className="w-3 h-3 ml-1" /> {t.admin.rejected}</Badge>;
       default:
         return null;
     }
@@ -570,10 +569,10 @@ const AdminDashboard = () => {
               </AnimatePresence>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
-                  {profile?.full_name || 'المدير'}
+                  {profile?.full_name || t.roles.admin}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {profile?.institution_name || 'المؤسسة'}
+                  {profile?.institution_name || t.settings.institution}
                 </p>
               </div>
             </div>
@@ -654,7 +653,7 @@ const AdminDashboard = () => {
       {currentView !== 'levels' && (
         <div className="container mx-auto px-4 py-2 text-sm text-muted-foreground">
           <span className="cursor-pointer hover:text-primary" onClick={() => { setCurrentView('levels'); setSelectedLevel(null); setSelectedBranch(null); setSelectedSection(null); }}>
-            الرئيسية
+            {t.admin.home}
           </span>
           {selectedLevel && (
             <>
@@ -715,11 +714,11 @@ const AdminDashboard = () => {
                   }}
                   className="group p-8 rounded-2xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all"
                 >
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center text-3xl font-bold text-primary-foreground shadow-lg">
-                    {getLevelIcon(index)}
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
+                    <GraduationCap className="w-10 h-10 text-primary-foreground" />
                   </div>
                   <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                    {level.name}
+                    {getLevelLabel(level.name)}
                   </h3>
                 </motion.button>
               ))}
@@ -740,7 +739,7 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
                     <Book className="w-5 h-5" />
-                    الشعب الأدبية
+                    {t.admin.literaryBranches}
                   </h3>
                   <div className="space-y-3">
                     {BRANCHES_DATA[selectedLevel.name]?.literary.map((branch, index) => (
@@ -764,7 +763,7 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
                     <GraduationCap className="w-5 h-5" />
-                    الشعب العلمية
+                    {t.admin.scientificBranches}
                   </h3>
                   <div className="space-y-3">
                     {BRANCHES_DATA[selectedLevel.name]?.scientific.map((branch, index) => (
@@ -801,20 +800,20 @@ const AdminDashboard = () => {
                   <DialogTrigger asChild>
                     <Button className="gradient-primary shadow-lg">
                       <Plus className="w-4 h-4 ml-2" />
-                      إضافة قسم
+                      {t.admin.addSection}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>إضافة قسم جديد</DialogTitle>
+                      <DialogTitle>{t.admin.addSection}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label>اسم القسم</Label>
+                        <Label>{t.admin.sectionName}</Label>
                         <Input
                           value={newSectionName}
                           onChange={(e) => setNewSectionName(e.target.value)}
-                          placeholder="مثال: القسم 1"
+                          placeholder={t.admin.sectionExample}
                           onKeyDown={(e) => e.key === 'Enter' && handleAddSection()}
                         />
                       </div>
@@ -823,7 +822,7 @@ const AdminDashboard = () => {
                         className="w-full gradient-primary"
                         disabled={isLoading || !newSectionName.trim()}
                       >
-                        {isLoading ? 'جاري الإضافة...' : 'إضافة'}
+                        {isLoading ? t.admin.adding : t.common.add}
                       </Button>
                     </div>
                   </DialogContent>
@@ -862,7 +861,7 @@ const AdminDashboard = () => {
                         <BookOpen className="w-8 h-8 text-primary" />
                       </div>
                       <span className="font-bold text-foreground text-lg">{section.name}</span>
-                      <span className="text-xs text-muted-foreground mt-1">انقر للفتح</span>
+                      <span className="text-xs text-muted-foreground mt-1">{t.admin.clickToOpen}</span>
                     </div>
                     
                     {/* Notebook lines */}
@@ -881,8 +880,8 @@ const AdminDashboard = () => {
                     className="col-span-full text-center py-16"
                   >
                     <BookOpen className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                    <p className="text-muted-foreground text-lg">لا توجد أقسام بعد</p>
-                    <p className="text-muted-foreground/60 text-sm mt-1">أضف قسماً جديداً للبدء</p>
+                    <p className="text-muted-foreground text-lg">{t.admin.noSectionsYet}</p>
+                    <p className="text-muted-foreground/60 text-sm mt-1">{t.admin.addFirstSection}</p>
                   </motion.div>
                 )}
               </div>
@@ -917,7 +916,7 @@ const AdminDashboard = () => {
                     onClick={() => setCurrentView('section-students')}
                   >
                     <ClipboardList className="w-4 h-4" />
-                    قائمة التلاميذ
+                    {t.admin.studentList}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -925,7 +924,7 @@ const AdminDashboard = () => {
                     onClick={() => setCurrentView('section-timetable')}
                   >
                     <Clock className="w-4 h-4" />
-                    الجدول الزمني
+                    {t.admin.timetable}
                   </Button>
                 </div>
               </div>
@@ -952,7 +951,7 @@ const AdminDashboard = () => {
                       {assignment ? (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">الأستاذ:</span>
+                            <span className="text-sm text-muted-foreground">{t.admin.assignTeacher.split(' ')[0]}:</span>
                             <span className="font-medium">{assignment.teacher_profiles.full_name}</span>
                           </div>
                           <div className="flex items-center justify-between">
@@ -966,7 +965,7 @@ const AdminDashboard = () => {
                               onClick={() => handleSubjectClick(subject, assignment)}
                             >
                               <BookOpen className="w-4 h-4 ml-2" />
-                              عرض الدروس
+                              {t.admin.lessons}
                             </Button>
                           )}
                         </div>
@@ -986,23 +985,23 @@ const AdminDashboard = () => {
                               onClick={() => setSelectedSubjectForAssignment(subject)}
                             >
                               <Users className="w-4 h-4 ml-2" />
-                              إسناد أستاذ
+                              {t.admin.assignTeacher}
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>إسناد أستاذ لمادة {subject.name}</DialogTitle>
+                              <DialogTitle>{t.admin.assignTeacher} - {subject.name}</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
-                                <Label>اختر الأستاذ</Label>
+                                <Label>{t.admin.selectTeacher}</Label>
                                 <div className="relative">
-                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                  <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
                                   <Input
                                     value={teacherSearchQuery}
                                     onChange={(e) => setTeacherSearchQuery(e.target.value)}
-                                    placeholder="ابحث عن الأستاذ بالاسم أو البريد..."
-                                    className="pr-10"
+                                    placeholder={t.admin.searchTeacher}
+                                    className={isRTL ? "pr-10" : "pl-10"}
                                   />
                                 </div>
                               </div>
@@ -1011,7 +1010,7 @@ const AdminDashboard = () => {
                                 <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-2">
                                   {filteredTeachers.length === 0 ? (
                                     <p className="text-center text-muted-foreground py-4">
-                                      لا يوجد أساتذة بهذا الاسم
+                                      {t.common.noResults}
                                     </p>
                                   ) : (
                                     filteredTeachers.map((teacher) => (
@@ -1037,7 +1036,7 @@ const AdminDashboard = () => {
                                 </div>
                               ) : (
                                 <p className="text-center text-muted-foreground py-4 border rounded-lg">
-                                  ابدأ بكتابة اسم الأستاذ للبحث
+                                  {t.admin.searchTeacher}
                                 </p>
                               )}
                               
@@ -1046,7 +1045,7 @@ const AdminDashboard = () => {
                                 className="w-full gradient-primary"
                                 disabled={isLoading || !selectedTeacherId}
                               >
-                                {isLoading ? 'جاري الإرسال...' : 'إرسال طلب الإسناد'}
+                                {isLoading ? t.admin.assigningTeacher : t.admin.assignTeacher}
                               </Button>
                             </div>
                           </DialogContent>
@@ -1080,7 +1079,7 @@ const AdminDashboard = () => {
                       <h2 className="text-2xl font-bold">{selectedSubject.name}</h2>
                     </div>
                     <p className="text-muted-foreground mt-1">
-                      الأستاذ: <span className="font-semibold text-foreground">{selectedTeacherAssignment.teacher_profiles.full_name}</span>
+                      {t.roles.teacher}: <span className="font-semibold text-foreground">{selectedTeacherAssignment.teacher_profiles.full_name}</span>
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedSection?.name} - {selectedBranch?.name} - {selectedLevel?.name}

@@ -326,7 +326,7 @@ const TeacherDashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
-                  {profile?.full_name || 'الأستاذ'}
+                  {profile?.full_name || t.roles.teacher}
                 </h1>
                 <Badge variant="secondary">{profile?.subject}</Badge>
               </div>
@@ -415,10 +415,10 @@ const TeacherDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="sections" className="space-y-6">
           <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-            <TabsTrigger value="sections">الأقسام</TabsTrigger>
-            <TabsTrigger value="files">ملفاتي</TabsTrigger>
+            <TabsTrigger value="sections">{t.teacher.assignedSections}</TabsTrigger>
+            <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
             <TabsTrigger value="notifications" className="relative">
-              الإشعارات
+              {t.teacher.notifications}
               {pendingAssignments.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
                   {pendingAssignments.length}
@@ -435,13 +435,13 @@ const TeacherDashboard = () => {
                 animate={{ opacity: 1 }}
                 className="space-y-6"
               >
-                <h2 className="text-xl font-bold">الأقسام المسندة</h2>
+                <h2 className="text-xl font-bold">{t.teacher.assignedSections}</h2>
                 
                 {assignments.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>لا توجد أقسام مسندة بعد</p>
-                    <p className="text-sm">انتظر طلبات الإسناد من المدير</p>
+                    <p>{t.teacher.noSectionsAssigned}</p>
+                    <p className="text-sm">{t.teacher.waitForAssignments}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -729,12 +729,12 @@ const TeacherDashboard = () => {
           {/* Notifications Tab */}
           <TabsContent value="notifications">
             <div className="space-y-4">
-              <h2 className="text-xl font-bold">طلبات الإسناد</h2>
+              <h2 className="text-xl font-bold">{t.teacher.pendingAssignments}</h2>
               
               {pendingAssignments.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>لا توجد طلبات جديدة</p>
+                  <p>{t.teacher.noNewAssignments}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -748,11 +748,10 @@ const TeacherDashboard = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold">
-                            طلب إسناد جديد
+                            {t.teacher.pendingAssignments}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            القسم: {(assignment as any).sections?.name} - 
-                            المادة: {(assignment as any).subjects?.name}
+                            {(assignment as any).sections?.name} - {(assignment as any).subjects?.name}
                           </p>
                         </div>
                         <div className="flex gap-2">

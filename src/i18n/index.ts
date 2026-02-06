@@ -1,15 +1,15 @@
-import ar from './translations/ar';
+import fr from './translations/fr';
 import en from './translations/en';
 
-export type Language = 'ar' | 'en';
-export type TranslationKeys = typeof ar;
+export type Language = 'fr' | 'en';
+export type TranslationKeys = typeof fr;
 
 export const translations: Record<Language, TranslationKeys> = {
-  ar,
+  fr,
   en,
 };
 
-export const defaultLanguage: Language = 'ar';
+export const defaultLanguage: Language = 'fr';
 
 // Get nested translation value
 export function getTranslation(
@@ -39,4 +39,4 @@ export function formatTranslation(str: string, params: Record<string, string | n
   return result;
 }
 
-export { ar, en };
+export { fr, en };

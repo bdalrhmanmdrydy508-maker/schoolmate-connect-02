@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Pencil, Trash2, X, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,35 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
   const [editName, setEditName] = useState(section.name);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPress = useRef(false);
+
+  const startLongPress = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setShowActions(true);
+      // Prevent the click from firing after long press
+      e.preventDefault();
+    }, 2000);
+  }, []);
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // If this was a long press, prevent navigation
+    if (isLongPress.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPress.current = false;
+    }
+  }, []);
 
   const handleSave = async () => {
     if (!editName.trim()) {
@@ -44,6 +73,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
 
     if (editName.trim() === section.name) {
       setIsEditing(false);
+      setShowActions(false);
       return;
     }
 
@@ -62,6 +92,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
       toast({ title: t.common.success, description: t.sectionManagement.sectionUpdated });
       onUpdate({ ...section, name: editName.trim() });
       setIsEditing(false);
+      setShowActions(false);
     }
   };
 
@@ -113,68 +144,100 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
   const handleCancel = () => {
     setEditName(section.name);
     setIsEditing(false);
+    setShowActions(false);
   };
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2 p-2 bg-secondary/30 rounded-lg">
-        <Input
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          className="flex-1 h-8"
-          autoFocus
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSave();
-            if (e.key === 'Escape') handleCancel();
-          }}
-        />
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={handleSave}
-          disabled={isLoading}
-        >
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-green-600" />}
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8"
-          onClick={handleCancel}
-        >
-          <X className="w-4 h-4" />
-        </Button>
+      <div 
+        className="absolute inset-0 z-10 flex items-center justify-center p-3 bg-card rounded-xl border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 w-full">
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="flex-1 h-8"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave();
+              if (e.key === 'Escape') handleCancel();
+            }}
+          />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={handleSave}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-green-600" />}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={handleCancel}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 left-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 bg-background/80 backdrop-blur-sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-          }}
+      {/* Long-press overlay to capture touch/mouse events */}
+      <div
+        className="absolute inset-0 z-[5]"
+        onMouseDown={startLongPress}
+        onMouseUp={cancelLongPress}
+        onMouseLeave={cancelLongPress}
+        onTouchStart={startLongPress}
+        onTouchEnd={cancelLongPress}
+        onTouchCancel={cancelLongPress}
+        onClick={handleClick}
+      />
+
+      {/* Action buttons shown after long press */}
+      {showActions && (
+        <div 
+          className="absolute inset-0 z-10 flex items-center justify-center gap-3 bg-card/95 backdrop-blur-sm rounded-xl border border-primary/30"
+          onClick={(e) => e.stopPropagation()}
         >
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            setDeleteDialogOpen(true);
-          }}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
-      </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              setIsEditing(true);
+            }}
+          >
+            <Pencil className="w-4 h-4" />
+            {t.sectionManagement.editSection}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => {
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+            {t.sectionManagement.deleteSection}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 absolute top-2 right-2"
+            onClick={() => setShowActions(false)}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
