@@ -203,6 +203,7 @@ export const fr = {
     lessonsAndSessions: 'Cours et séances',
     noLessonsYet: 'Aucun cours pour le moment',
     duration: 'Durée',
+    viewOnly: 'Consultation uniquement',
   },
 
   // Control Panel

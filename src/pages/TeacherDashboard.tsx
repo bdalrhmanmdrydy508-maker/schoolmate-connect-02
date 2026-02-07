@@ -444,24 +444,38 @@ const TeacherDashboard = () => {
                     <p className="text-sm">{t.teacher.waitForAssignments}</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                     {assignments.map((assignment, index) => (
                       <motion.button
                         key={assignment.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        whileHover={{ scale: 1.02 }}
+                        initial={{ opacity: 0, scale: 0.9, rotateY: -20 }}
+                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.05, y: -8 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setSelectedSection(assignment)}
-                        className="p-6 rounded-xl bg-card border border-border/50 text-right hover:border-primary transition-colors"
+                        className="notebook-card group relative"
                       >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-                            <Users className="w-5 h-5 text-primary-foreground" />
+                        {/* Notebook binding */}
+                        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-primary/30 to-transparent rounded-r-xl" />
+                        <div className="absolute right-2 top-4 bottom-4 w-0.5 bg-primary/20" />
+                        
+                        {/* Notebook content */}
+                        <div className="relative h-full flex flex-col items-center justify-center p-4">
+                          <div className="w-14 h-18 bg-primary/10 rounded-lg mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <BookOpen className="w-8 h-8 text-primary" />
                           </div>
-                          <span className="font-semibold">{(assignment as any).sections?.name}</span>
+                          <span className="font-bold text-foreground text-lg">{(assignment as any).sections?.name}</span>
+                          <Badge variant="outline" className="mt-2">{(assignment as any).subjects?.name}</Badge>
+                          <span className="text-xs text-muted-foreground mt-1">{t.teacher.viewOnly}</span>
                         </div>
-                        <Badge variant="outline">{(assignment as any).subjects?.name}</Badge>
+                        
+                        {/* Notebook lines */}
+                        <div className="absolute inset-x-8 bottom-8 space-y-2 opacity-20">
+                          <div className="h-px bg-primary/50" />
+                          <div className="h-px bg-primary/50" />
+                          <div className="h-px bg-primary/50" />
+                        </div>
                       </motion.button>
                     ))}
                   </div>
