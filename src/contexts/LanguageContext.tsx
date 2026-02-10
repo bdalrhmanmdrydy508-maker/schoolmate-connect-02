@@ -25,7 +25,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Apply language direction and load from database
   useEffect(() => {
     const root = document.documentElement;
-    const isRTL = language === 'ar' as string;
+    const isRTL = language === 'ar';
     root.dir = isRTL ? 'rtl' : 'ltr';
     root.lang = language;
     localStorage.setItem('app_language', language);
