@@ -438,6 +438,7 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
                   <SelectContent>
                     <SelectItem value="fr">{t.languages.fr}</SelectItem>
                     <SelectItem value="en">{t.languages.en}</SelectItem>
+                    <SelectItem value="ar">{t.languages.ar}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

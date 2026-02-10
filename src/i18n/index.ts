@@ -41,4 +41,4 @@ export function formatTranslation(str: string, params: Record<string, string | n
   return result;
 }
 
-export { fr, en };
+export { fr, en, ar };

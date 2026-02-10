@@ -457,6 +457,7 @@ export const TeacherSettings = ({ profile, onClose, onThemeChange, onProfileUpda
                   <SelectContent>
                     <SelectItem value="fr">{t.languages.fr}</SelectItem>
                     <SelectItem value="en">{t.languages.en}</SelectItem>
+                    <SelectItem value="ar">{t.languages.ar}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

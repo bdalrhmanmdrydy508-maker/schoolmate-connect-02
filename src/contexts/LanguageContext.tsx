@@ -84,7 +84,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return text;
   }, [language]);
 
-  const isRTL = (language as string) === 'ar';
+  const isRTL = language === 'ar';
 
   const value = useMemo(() => ({
     language,
