@@ -16,6 +16,7 @@ import { SectionManagement } from '@/components/SectionManagement';
 import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LessonPage } from '@/components/LessonPage';
 
 interface AdminProfile {
   full_name: string;
