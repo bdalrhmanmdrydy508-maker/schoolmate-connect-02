@@ -18,6 +18,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LessonPage } from '@/components/LessonPage';
 
 interface TeacherProfile {
   id: string;
