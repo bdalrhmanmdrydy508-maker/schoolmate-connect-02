@@ -16,6 +16,7 @@ import { SectionManagement } from '@/components/SectionManagement';
 import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LessonPage } from '@/components/LessonPage';
 
 interface AdminProfile {
   full_name: string;
@@ -602,52 +603,16 @@ const AdminDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Lesson Detail Modal */}
-      <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && setSelectedLesson(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">{selectedLesson?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedLesson && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4 flex-wrap text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formatDateForDisplay(selectedLesson.lesson_date)}</span>
-                </div>
-                {selectedLesson.duration && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{selectedLesson.duration}</span>
-                  </div>
-                )}
-              </div>
-              
-              {selectedLesson.description && (
-                <div className="prose prose-sm max-w-none">
-                  <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                    {selectedLesson.description}
-                  </div>
-                </div>
-              )}
-              
-              {selectedLesson.file_url && (
-                <div className="pt-4 border-t">
-                  <a 
-                    href={selectedLesson.file_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    <FileText className="w-4 h-4" />
-                    {t.admin.openLessonFile}
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Lesson Detail - Full Page (view-only for admin) */}
+      <AnimatePresence>
+        {selectedLesson && (
+          <LessonPage
+            lesson={selectedLesson}
+            onClose={() => setSelectedLesson(null)}
+            showEditButton={false}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Breadcrumb */}
       {currentView !== 'levels' && (

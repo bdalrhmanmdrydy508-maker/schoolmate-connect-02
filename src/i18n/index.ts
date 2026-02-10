@@ -1,12 +1,14 @@
 import fr from './translations/fr';
 import en from './translations/en';
+import ar from './translations/ar';
 
-export type Language = 'fr' | 'en';
+export type Language = 'fr' | 'en' | 'ar';
 export type TranslationKeys = typeof fr;
 
 export const translations: Record<Language, TranslationKeys> = {
   fr,
   en,
+  ar: ar as unknown as TranslationKeys,
 };
 
 export const defaultLanguage: Language = 'fr';
@@ -39,4 +41,4 @@ export function formatTranslation(str: string, params: Record<string, string | n
   return result;
 }
 
-export { fr, en };
+export { fr, en, ar };

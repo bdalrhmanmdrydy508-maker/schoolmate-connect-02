@@ -16,7 +16,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>(() => {
     // Check localStorage first for immediate loading
     const stored = localStorage.getItem('app_language');
-    if (stored === 'fr' || stored === 'en') {
+    if (stored === 'fr' || stored === 'en' || stored === 'ar') {
       return stored;
     }
     return defaultLanguage;
@@ -25,7 +25,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Apply language direction and load from database
   useEffect(() => {
     const root = document.documentElement;
-    const isRTL = language === 'ar' as string;
+    const isRTL = language === 'ar';
     root.dir = isRTL ? 'rtl' : 'ltr';
     root.lang = language;
     localStorage.setItem('app_language', language);
@@ -42,7 +42,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (data?.language && (data.language === 'fr' || data.language === 'en')) {
+        if (data?.language && (data.language === 'fr' || data.language === 'en' || data.language === 'ar')) {
           setLanguageState(data.language as Language);
         }
       }
@@ -84,7 +84,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return text;
   }, [language]);
 
-  const isRTL = (language as string) === 'ar';
+  const isRTL = language === 'ar';
 
   const value = useMemo(() => ({
     language,
