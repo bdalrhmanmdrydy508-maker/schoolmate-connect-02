@@ -209,8 +209,8 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
         value === 'small' ? '14px' : value === 'large' ? '18px' : '16px';
     }
 
-    if (key === 'language' && (value === 'fr' || value === 'en')) {
-      await setLanguage(value);
+    if (key === 'language' && (value === 'fr' || value === 'en' || value === 'ar')) {
+      await setLanguage(value as any);
     }
 
     const { data: { user } } = await supabase.auth.getUser();
