@@ -42,7 +42,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (data?.language && (data.language === 'fr' || data.language === 'en')) {
+        if (data?.language && (data.language === 'fr' || data.language === 'en' || data.language === 'ar')) {
           setLanguageState(data.language as Language);
         }
       }
