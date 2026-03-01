@@ -318,6 +318,43 @@ export const fr = {
     androidInstructions: 'Sur Android : Appuyez sur le menu puis "Installer l\'application"',
   },
 
+  // Program
+  program: {
+    title: '📘 Mon Programme',
+    uploadInstruction: 'Téléversez votre programme de cours pour le convertir automatiquement en tableau organisé',
+    analyzing: 'Analyse du programme par IA...',
+    pleaseWait: 'Veuillez patienter',
+    programAnalyzed: 'Programme analysé avec succès ({count} cours)',
+    analysisFailed: 'Échec de l\'analyse du programme',
+    noLessonsExtracted: 'Aucun cours n\'a été extrait du fichier',
+    unsupportedFormat: 'Format non supporté (JPG, PNG, PDF)',
+    rateLimited: 'Limite de requêtes atteinte, réessayez plus tard',
+    addLesson: '➕ Ajouter un cours',
+    lessonNumber: 'Numéro du cours',
+    lessonTitle: 'Titre du cours',
+    lessonTitlePlaceholder: 'Entrez le titre du cours',
+    unit: 'Unité',
+    unitPlaceholder: 'Entrez le nom de l\'unité',
+    status: 'Statut',
+    progress: 'Progression du programme',
+    reupload: 'Re-téléverser',
+    noProgramYet: 'Aucun programme configuré',
+    titleRequired: 'Veuillez entrer le titre du cours',
+    addError: 'Échec de l\'ajout du cours',
+    deleteError: 'Échec de la suppression du cours',
+    lessonAdded: 'Cours ajouté',
+  },
+
+  // Lesson Edit
+  lessonEdit: {
+    editLesson: 'Modifier le cours',
+    lessonUpdated: 'Cours mis à jour avec succès',
+    updateError: 'Échec de la mise à jour du cours',
+    deleteLesson: 'Supprimer le cours',
+    deleteConfirm: 'Êtes-vous sûr de vouloir supprimer ce cours ?',
+    lessonDeleted: 'Cours supprimé',
+  },
+
   // Languages
   languages: {
     ar: 'العربية',

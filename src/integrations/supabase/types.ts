@@ -158,6 +158,45 @@ export type Database = {
         }
         Relationships: []
       }
+      program_templates: {
+        Row: {
+          created_at: string
+          id: string
+          original_data: Json
+          section_id: string
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_data?: Json
+          section_id: string
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_data?: Json
+          section_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_templates_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_templates_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sections: {
         Row: {
           branch_id: string
@@ -390,6 +429,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      teacher_programs: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_number: number
+          lesson_title: string
+          section_id: string
+          status: string
+          teacher_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_number: number
+          lesson_title: string
+          section_id: string
+          status?: string
+          teacher_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_number?: number
+          lesson_title?: string
+          section_id?: string
+          status?: string
+          teacher_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_programs_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_programs_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       timetables: {
         Row: {

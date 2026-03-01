@@ -317,6 +317,43 @@ export const ar = {
     androidInstructions: 'على Android: انقر على القائمة ثم "تثبيت التطبيق"',
   },
 
+  // Program
+  program: {
+    title: '📘 برنامجي',
+    uploadInstruction: 'ارفع برنامج الدروس لتحويله تلقائياً إلى جدول منظم',
+    analyzing: 'جاري تحليل البرنامج بالذكاء الاصطناعي...',
+    pleaseWait: 'يرجى الانتظار',
+    programAnalyzed: 'تم تحليل البرنامج بنجاح ({count} درس)',
+    analysisFailed: 'فشل تحليل البرنامج',
+    noLessonsExtracted: 'لم يتم استخراج أي دروس من الملف',
+    unsupportedFormat: 'صيغة الملف غير مدعومة (JPG, PNG, PDF)',
+    rateLimited: 'تم تجاوز الحد المسموح، يرجى المحاولة لاحقاً',
+    addLesson: '➕ إضافة درس',
+    lessonNumber: 'رقم الدرس',
+    lessonTitle: 'عنوان الدرس',
+    lessonTitlePlaceholder: 'أدخل عنوان الدرس',
+    unit: 'الوحدة',
+    unitPlaceholder: 'أدخل اسم الوحدة',
+    status: 'الحالة',
+    progress: 'تقدم البرنامج',
+    reupload: 'إعادة الرفع',
+    noProgramYet: 'لم يتم إعداد البرنامج بعد',
+    titleRequired: 'يرجى إدخال عنوان الدرس',
+    addError: 'فشل إضافة الدرس',
+    deleteError: 'فشل حذف الدرس',
+    lessonAdded: 'تم إضافة الدرس',
+  },
+
+  // Lesson Edit
+  lessonEdit: {
+    editLesson: 'تعديل الدرس',
+    lessonUpdated: 'تم تحديث الدرس بنجاح',
+    updateError: 'فشل تحديث الدرس',
+    deleteLesson: 'حذف الدرس',
+    deleteConfirm: 'هل أنت متأكد من حذف هذا الدرس؟',
+    lessonDeleted: 'تم حذف الدرس',
+  },
+
   // Languages
   languages: {
     ar: 'العربية',

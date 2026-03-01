@@ -19,6 +19,7 @@ import { StudentList } from '@/components/StudentList';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
+import { MyProgram } from '@/components/MyProgram';
 
 interface TeacherProfile {
   id: string;
@@ -58,7 +59,7 @@ const TeacherDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students'>('lessons');
+  const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students' | 'program'>('lessons');
   const [lessonSearchQuery, setLessonSearchQuery] = useState('');
 
   // Lesson form
@@ -372,8 +373,14 @@ const TeacherDashboard = () => {
             lesson={selectedLesson}
             onClose={() => setSelectedLesson(null)}
             showEditButton={true}
-            onEdit={() => {
-              // Future: implement edit functionality
+            teacherUserId={profile?.user_id}
+            onUpdate={(updated) => {
+              setLessons(prev => prev.map(l => l.id === updated.id ? { ...updated, description: updated.description || '' } : l));
+              setSelectedLesson(updated);
+            }}
+            onDelete={(id) => {
+              setLessons(prev => prev.filter(l => l.id !== id));
+              setSelectedLesson(null);
             }}
           />
         )}
@@ -609,9 +616,13 @@ const TeacherDashboard = () => {
                     {t.admin.studentList}
                   </Button>
 
-                  <Button variant="outline" className="h-24 flex-col gap-2">
-                    <ClipboardList className="w-6 h-6" />
-                    {t.timetable.title}
+                  <Button 
+                    variant="outline" 
+                    className="h-24 flex-col gap-2"
+                    onClick={() => setActiveView('program')}
+                  >
+                    <BookOpen className="w-6 h-6" />
+                    {t.program.title}
                   </Button>
                 </div>
 
@@ -622,6 +633,15 @@ const TeacherDashboard = () => {
                     sectionName={(selectedSection as any).sections?.name || ''}
                     onBack={() => setActiveView('lessons')}
                     readOnly={true}
+                  />
+                )}
+
+                {activeView === 'program' && profile && (
+                  <MyProgram
+                    sectionId={selectedSection.section_id}
+                    teacherId={profile.id}
+                    readOnly={false}
+                    onBack={() => setActiveView('lessons')}
                   />
                 )}
 

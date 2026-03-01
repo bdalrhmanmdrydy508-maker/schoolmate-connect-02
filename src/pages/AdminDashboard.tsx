@@ -17,6 +17,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
+import { MyProgram } from '@/components/MyProgram';
 
 interface AdminProfile {
   full_name: string;
@@ -118,7 +119,7 @@ const AdminDashboard = () => {
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
-  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students' | 'section-program'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
@@ -466,7 +467,7 @@ const AdminDashboard = () => {
   };
 
   const handleBack = () => {
-    if (currentView === 'section-timetable' || currentView === 'section-students') {
+    if (currentView === 'section-timetable' || currentView === 'section-students' || currentView === 'section-program') {
       setCurrentView('section-detail');
     } else if (currentView === 'subject-lessons') {
       setCurrentView('section-detail');
@@ -891,6 +892,14 @@ const AdminDashboard = () => {
                     <Clock className="w-4 h-4" />
                     {t.admin.timetable}
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => setCurrentView('section-program')}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {t.program.title}
+                  </Button>
                 </div>
               </div>
 
@@ -1160,6 +1169,36 @@ const AdminDashboard = () => {
               onBack={() => setCurrentView('section-detail')}
               readOnly={false}
             />
+          )}
+
+          {/* Section Program View (read-only for admin) */}
+          {currentView === 'section-program' && selectedSection && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <Button variant="ghost" onClick={() => setCurrentView('section-detail')}>{t.common.back}</Button>
+                <h2 className="text-xl font-bold">{t.program.title} - {selectedSection.name}</h2>
+              </div>
+              {assignments.filter(a => a.status === 'accepted').length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>{t.program.noProgramYet}</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {assignments.filter(a => a.status === 'accepted').map(a => (
+                    <div key={a.id}>
+                      <h3 className="text-lg font-semibold mb-3">{a.teacher_profiles.full_name}</h3>
+                      <MyProgram
+                        sectionId={selectedSection.id}
+                        teacherId={a.teacher_id}
+                        readOnly={true}
+                        onBack={() => {}}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </AnimatePresence>
       </main>
