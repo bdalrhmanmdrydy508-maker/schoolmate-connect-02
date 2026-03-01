@@ -318,6 +318,43 @@ export const en = {
     androidInstructions: 'On Android: Tap the menu then "Install App"',
   },
 
+  // Program
+  program: {
+    title: '📘 My Program',
+    uploadInstruction: 'Upload your lesson program to automatically convert it into an organized table',
+    analyzing: 'Analyzing program with AI...',
+    pleaseWait: 'Please wait',
+    programAnalyzed: 'Program analyzed successfully ({count} lessons)',
+    analysisFailed: 'Failed to analyze program',
+    noLessonsExtracted: 'No lessons were extracted from the file',
+    unsupportedFormat: 'Unsupported format (JPG, PNG, PDF)',
+    rateLimited: 'Rate limit exceeded, please try again later',
+    addLesson: '➕ Add Lesson',
+    lessonNumber: 'Lesson Number',
+    lessonTitle: 'Lesson Title',
+    lessonTitlePlaceholder: 'Enter lesson title',
+    unit: 'Unit',
+    unitPlaceholder: 'Enter unit name',
+    status: 'Status',
+    progress: 'Program Progress',
+    reupload: 'Re-upload',
+    noProgramYet: 'No program set up yet',
+    titleRequired: 'Please enter lesson title',
+    addError: 'Failed to add lesson',
+    deleteError: 'Failed to delete lesson',
+    lessonAdded: 'Lesson added',
+  },
+
+  // Lesson Edit
+  lessonEdit: {
+    editLesson: 'Edit Lesson',
+    lessonUpdated: 'Lesson updated successfully',
+    updateError: 'Failed to update lesson',
+    deleteLesson: 'Delete Lesson',
+    deleteConfirm: 'Are you sure you want to delete this lesson?',
+    lessonDeleted: 'Lesson deleted',
+  },
+
   // Languages
   languages: {
     ar: 'العربية',
