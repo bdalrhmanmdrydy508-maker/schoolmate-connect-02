@@ -33,22 +33,40 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load language from database on auth state change
   useEffect(() => {
+    let mounted = true;
+    
     const loadLanguageFromDB = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !mounted) return;
+        
         const { data } = await supabase
           .from('user_settings')
           .select('language')
           .eq('user_id', user.id)
           .maybeSingle();
         
+        if (!mounted) return;
+        
         if (data?.language && (data.language === 'fr' || data.language === 'en' || data.language === 'ar')) {
-          setLanguageState(data.language as Language);
+          // Only update if DB has a value AND it differs from current
+          const stored = localStorage.getItem('app_language');
+          if (!stored || stored !== data.language) {
+            setLanguageState(data.language as Language);
+            localStorage.setItem('app_language', data.language);
+          }
+        } else if (!data) {
+          // No settings row yet — save current language to DB
+          const currentLang = localStorage.getItem('app_language') || defaultLanguage;
+          await supabase.from('user_settings').insert({
+            user_id: user.id,
+            language: currentLang,
+          });
         }
+      } catch (e) {
+        console.error('Error loading language:', e);
       }
     };
-
-    loadLanguageFromDB();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
@@ -56,7 +74,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Only load from DB on first mount if no localStorage value
+    const stored = localStorage.getItem('app_language');
+    if (!stored) {
+      loadLanguageFromDB();
+    }
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const setLanguage = useCallback(async (lang: Language) => {
