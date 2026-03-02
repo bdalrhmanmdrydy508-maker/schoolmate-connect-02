@@ -342,6 +342,13 @@ export const ar = {
     addError: 'فشل إضافة الدرس',
     deleteError: 'فشل حذف الدرس',
     lessonAdded: 'تم إضافة الدرس',
+    fileTooLarge: 'حجم الملف كبير جدًا (الحد الأقصى 20 ميجابايت)',
+    fileEmpty: 'الملف فارغ',
+    fileReadError: 'فشل قراءة الملف',
+    noConnection: 'لا يوجد اتصال بالإنترنت',
+    retrying: 'إعادة المحاولة ({attempt})...',
+    serverError: 'حدث خطأ أثناء حفظ الملف على الخادم، يرجى المحاولة لاحقًا',
+    uploadError: 'حدث خطأ أثناء رفع الملف. يرجى التأكد من نوع الملف وحجمه وإعادة المحاولة',
   },
 
   // Lesson Edit

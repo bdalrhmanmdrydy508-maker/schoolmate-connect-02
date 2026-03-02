@@ -1,13 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Trash2, Plus, Loader2, FileUp, BookOpen } from 'lucide-react';
+import { Upload, Trash2, Plus, Loader2, FileUp, BookOpen, AlertCircle, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
 
 interface ProgramLesson {
   id: string;
@@ -37,6 +42,8 @@ export const MyProgram = ({ sectionId, teacherId, readOnly = false, onBack }: My
   const [templateData, setTemplateData] = useState<TemplateLesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [newLessonTitle, setNewLessonTitle] = useState('');
   const [newLessonUnit, setNewLessonUnit] = useState('');
@@ -112,42 +119,113 @@ export const MyProgram = ({ sectionId, teacherId, readOnly = false, onBack }: My
     setUnitSuggestions(filtered.slice(0, 5));
   }, [newLessonUnit, templateData, lessons]);
 
+  // Convert file to base64 using FileReader (handles large files better)
+  const fileToBase64 = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = () => reject(new Error(t.program.fileReadError));
+      reader.onprogress = (event) => {
+        if (event.lengthComputable) {
+          setUploadProgress(Math.round((event.loaded / event.total) * 40));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }, [t]);
+
+  // Retry wrapper for network calls
+  const withRetry = useCallback(async <T,>(
+    fn: () => Promise<T>,
+    retries = MAX_RETRIES
+  ): Promise<T> => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        const isNetworkError = !navigator.onLine || 
+          err.message?.includes('Failed to fetch') || 
+          err.message?.includes('NetworkError') ||
+          err.message?.includes('network');
+        
+        if (attempt === retries || !isNetworkError) throw err;
+        
+        setUploadError(t.program.retrying.replace('{attempt}', String(attempt)));
+        await new Promise(r => setTimeout(r, RETRY_DELAY * attempt));
+        setUploadError(null);
+      }
+    }
+    throw new Error(t.program.analysisFailed);
+  }, [t]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Reset input so same file can be re-selected
+    e.target.value = '';
 
+    // Validate file type
     const allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
     if (!allowed.includes(file.type)) {
       toast({ title: t.common.error, description: t.program.unsupportedFormat, variant: 'destructive' });
       return;
     }
 
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast({ title: t.common.error, description: t.program.fileTooLarge, variant: 'destructive' });
+      return;
+    }
+
+    if (file.size === 0) {
+      toast({ title: t.common.error, description: t.program.fileEmpty, variant: 'destructive' });
+      return;
+    }
+
+    // Check network
+    if (!navigator.onLine) {
+      toast({ title: t.common.error, description: t.program.noConnection, variant: 'destructive' });
+      return;
+    }
+
     setIsAnalyzing(true);
+    setUploadProgress(0);
+    setUploadError(null);
+
     try {
-      // Convert file to base64
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const fileBase64 = btoa(binary);
+      // Step 1: Convert to base64
+      setUploadProgress(5);
+      const fileBase64 = await fileToBase64(file);
+      setUploadProgress(40);
 
+      // Step 2: Send to AI analysis with retry
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+      setUploadProgress(50);
 
-      const { data, error } = await supabase.functions.invoke('analyze-program', {
-        body: { fileBase64, fileType, mimeType: file.type }
-      });
-
-      if (error) throw error;
-      if (data?.error) {
-        if (data.error.includes('Rate limit')) {
-          toast({ title: t.common.error, description: t.program.rateLimited, variant: 'destructive' });
-        } else {
+      const data = await withRetry(async () => {
+        const { data, error } = await supabase.functions.invoke('analyze-program', {
+          body: { fileBase64, fileType, mimeType: file.type }
+        });
+        if (error) throw error;
+        if (data?.error) {
+          if (data.error.includes('Rate limit')) {
+            throw new Error(t.program.rateLimited);
+          }
+          if (data.error.includes('Payment')) {
+            throw new Error(t.program.analysisFailed);
+          }
           throw new Error(data.error);
         }
-        return;
-      }
+        return data;
+      });
+
+      setUploadProgress(70);
 
       const extractedLessons: TemplateLesson[] = data.lessons || [];
       if (extractedLessons.length === 0) {
@@ -155,53 +233,66 @@ export const MyProgram = ({ sectionId, teacherId, readOnly = false, onBack }: My
         return;
       }
 
-      // Save template
-      const { data: existingTmpl } = await supabase
-        .from('program_templates')
-        .select('id')
-        .eq('teacher_id', teacherId)
-        .eq('section_id', sectionId)
-        .maybeSingle();
+      // Step 3: Save template
+      setUploadProgress(80);
+      await withRetry(async () => {
+        const { data: existingTmpl } = await supabase
+          .from('program_templates')
+          .select('id')
+          .eq('teacher_id', teacherId)
+          .eq('section_id', sectionId)
+          .maybeSingle();
 
-      if (existingTmpl) {
-        await supabase.from('program_templates').update({
-          original_data: extractedLessons as any
-        }).eq('id', existingTmpl.id);
-      } else {
-        await supabase.from('program_templates').insert({
+        if (existingTmpl) {
+          const { error } = await supabase.from('program_templates').update({
+            original_data: extractedLessons as any
+          }).eq('id', existingTmpl.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('program_templates').insert({
+            teacher_id: teacherId,
+            section_id: sectionId,
+            original_data: extractedLessons as any
+          });
+          if (error) throw error;
+        }
+      });
+
+      // Step 4: Insert lessons
+      setUploadProgress(90);
+      await withRetry(async () => {
+        const inserts = extractedLessons.map(l => ({
           teacher_id: teacherId,
           section_id: sectionId,
-          original_data: extractedLessons as any
-        });
-      }
+          lesson_number: l.lesson_number,
+          lesson_title: l.lesson_title,
+          unit: l.unit || null,
+          status: 'not_taught'
+        }));
 
-      // Insert lessons into teacher_programs
-      const inserts = extractedLessons.map(l => ({
-        teacher_id: teacherId,
-        section_id: sectionId,
-        lesson_number: l.lesson_number,
-        lesson_title: l.lesson_title,
-        unit: l.unit || null,
-        status: 'not_taught'
-      }));
+        await supabase.from('teacher_programs')
+          .delete()
+          .eq('teacher_id', teacherId)
+          .eq('section_id', sectionId);
 
-      // Delete existing lessons first
-      await supabase.from('teacher_programs')
-        .delete()
-        .eq('teacher_id', teacherId)
-        .eq('section_id', sectionId);
+        const { error: insertError } = await supabase.from('teacher_programs').insert(inserts);
+        if (insertError) throw insertError;
+      });
 
-      const { error: insertError } = await supabase.from('teacher_programs').insert(inserts);
-      if (insertError) throw insertError;
-
+      setUploadProgress(100);
       toast({ title: t.common.success, description: t.program.programAnalyzed.replace('{count}', String(extractedLessons.length)) });
       setTemplateData(extractedLessons);
       fetchProgram();
     } catch (err: any) {
       console.error('Analysis error:', err);
-      toast({ title: t.common.error, description: err.message || t.program.analysisFailed, variant: 'destructive' });
+      const msg = !navigator.onLine 
+        ? t.program.noConnection 
+        : err.message || t.program.analysisFailed;
+      setUploadError(msg);
+      toast({ title: t.common.error, description: msg, variant: 'destructive' });
     } finally {
       setIsAnalyzing(false);
+      setTimeout(() => { setUploadProgress(0); setUploadError(null); }, 3000);
     }
   };
 
@@ -303,10 +394,17 @@ export const MyProgram = ({ sectionId, teacherId, readOnly = false, onBack }: My
           className="flex flex-col items-center justify-center py-16 px-8 rounded-2xl border-2 border-dashed border-border bg-card"
         >
           {isAnalyzing ? (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4 w-full max-w-sm">
               <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
               <p className="text-lg font-medium">{t.program.analyzing}</p>
-              <p className="text-sm text-muted-foreground">{t.program.pleaseWait}</p>
+              <Progress value={uploadProgress} className="h-2" />
+              <p className="text-sm text-muted-foreground">{uploadProgress}%</p>
+              {uploadError && (
+                <div className="flex items-center gap-2 text-sm text-destructive justify-center">
+                  <WifiOff className="w-4 h-4" />
+                  <span>{uploadError}</span>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -418,9 +516,19 @@ export const MyProgram = ({ sectionId, teacherId, readOnly = false, onBack }: My
       </div>
 
       {isAnalyzing && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          <span>{t.program.analyzing}</span>
+        <div className="space-y-2 p-4 rounded-xl bg-primary/10 border border-primary/20">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span>{t.program.analyzing}</span>
+            <span className="text-sm text-muted-foreground ml-auto">{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-2" />
+          {uploadError && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <AlertCircle className="w-4 h-4" />
+              <span>{uploadError}</span>
+            </div>
+          )}
         </div>
       )}
 
