@@ -343,6 +343,13 @@ export const fr = {
     addError: 'Échec de l\'ajout du cours',
     deleteError: 'Échec de la suppression du cours',
     lessonAdded: 'Cours ajouté',
+    fileTooLarge: 'Fichier trop volumineux (max 20 Mo)',
+    fileEmpty: 'Le fichier est vide',
+    fileReadError: 'Échec de la lecture du fichier',
+    noConnection: 'Pas de connexion Internet',
+    retrying: 'Nouvelle tentative ({attempt})...',
+    serverError: 'Erreur serveur lors de l\'enregistrement, veuillez réessayer plus tard',
+    uploadError: 'Erreur lors du téléversement. Vérifiez le type et la taille du fichier',
   },
 
   // Lesson Edit

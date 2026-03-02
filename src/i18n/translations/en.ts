@@ -343,6 +343,13 @@ export const en = {
     addError: 'Failed to add lesson',
     deleteError: 'Failed to delete lesson',
     lessonAdded: 'Lesson added',
+    fileTooLarge: 'File too large (max 20MB)',
+    fileEmpty: 'File is empty',
+    fileReadError: 'Failed to read file',
+    noConnection: 'No internet connection',
+    retrying: 'Retrying ({attempt})...',
+    serverError: 'Server error while saving, please try again later',
+    uploadError: 'Error uploading file. Please check file type and size and try again',
   },
 
   // Lesson Edit
