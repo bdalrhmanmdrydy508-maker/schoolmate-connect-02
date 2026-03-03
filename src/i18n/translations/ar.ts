@@ -308,6 +308,32 @@ export const ar = {
     deleteError: 'فشل حذف القسم',
   },
 
+  // Subject Management
+  subjectManagement: {
+    addSubject: 'إضافة مادة',
+    subjectName: 'اسم المادة',
+    subjectNamePlaceholder: 'أدخل اسم المادة',
+    subjectAdded: 'تم إضافة المادة بنجاح',
+    subjectExists: 'هذه المادة موجودة مسبقاً في هذا القسم',
+    addError: 'فشل إضافة المادة',
+    settings: 'إعدادات المادة',
+    changeName: 'تغيير الاسم',
+    changeTeacher: 'تغيير الأستاذ',
+    deleteSubject: 'حذف المادة',
+    deleteConfirm: 'هل أنت متأكد من حذف هذه المادة من القسم؟',
+    subjectDeleted: 'تم حذف المادة',
+    subjectUpdated: 'تم تحديث المادة',
+    deleteError: 'فشل حذف المادة',
+    updateError: 'فشل تحديث المادة',
+    noSubjectsYet: 'لا توجد مواد بعد',
+    addFirstSubject: 'أضف مادة جديدة للبدء',
+    newSubjectName: 'الاسم الجديد',
+    selectTeacher: 'اختر أستاذ',
+    noTeacher: 'بدون أستاذ',
+    teacherUpdated: 'تم تحديث الأستاذ',
+    nameUpdated: 'تم تحديث اسم المادة',
+  },
+
   // Install App
   install: {
     title: 'تثبيت التطبيق',

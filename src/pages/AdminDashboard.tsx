@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList } from 'lucide-react';
+import { SubjectCard } from '@/components/SubjectCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +47,14 @@ interface Section {
 interface Subject {
   id: string;
   name: string;
+}
+
+interface SectionSubject {
+  id: string;
+  section_id: string;
+  subject_name: string;
+  teacher_profile_id: string | null;
+  teacher_name?: string;
 }
 
 interface TeacherProfile {
@@ -116,6 +125,7 @@ const AdminDashboard = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [sectionSubjects, setSectionSubjects] = useState<SectionSubject[]>([]);
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
@@ -125,6 +135,8 @@ const AdminDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   
   const [newSectionName, setNewSectionName] = useState('');
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [isAddingSubjectOpen, setIsAddingSubjectOpen] = useState(false);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
   const [selectedSubjectForAssignment, setSelectedSubjectForAssignment] = useState<Subject | null>(null);
@@ -236,6 +248,25 @@ const AdminDashboard = () => {
     if (data) setAssignments(data as unknown as TeacherAssignment[]);
   }, []);
 
+  const fetchSectionSubjects = useCallback(async (sectionId: string) => {
+    const { data } = await supabase
+      .from('section_subjects')
+      .select('id, section_id, subject_name, teacher_profile_id')
+      .eq('section_id', sectionId)
+      .order('created_at');
+    
+    if (data) {
+      // Enrich with teacher names
+      const enriched = data.map(ss => {
+        const teacher = ss.teacher_profile_id 
+          ? teachers.find(t => t.id === ss.teacher_profile_id) 
+          : null;
+        return { ...ss, teacher_name: teacher?.full_name };
+      });
+      setSectionSubjects(enriched);
+    }
+  }, [teachers]);
+
   const fetchLessons = useCallback(async (sectionId: string, teacherId: string) => {
     const { data, error } = await supabase
       .from('lessons')
@@ -267,8 +298,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (selectedSection) {
       fetchAssignments(selectedSection.id);
+      fetchSectionSubjects(selectedSection.id);
     }
-  }, [selectedSection, fetchAssignments]);
+  }, [selectedSection, fetchAssignments, fetchSectionSubjects]);
 
   const getOrCreateBranch = async (branchName: string, levelId: string): Promise<Branch | null> => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -464,6 +496,42 @@ const AdminDashboard = () => {
       setIsAssigningTeacher(false);
       setSelectedSubjectForAssignment(null);
     }
+  };
+
+  const handleAddSubject = async () => {
+    const name = newSubjectName.trim();
+    if (!name || !selectedSection) return;
+
+    // Check if subject already exists in this section
+    if (sectionSubjects.some(ss => ss.subject_name.toLowerCase() === name.toLowerCase())) {
+      toast({ title: t.common.warning, description: t.subjectManagement.subjectExists, variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('section_subjects')
+      .insert({ section_id: selectedSection.id, subject_name: name })
+      .select()
+      .single();
+
+    setIsLoading(false);
+    if (error) {
+      toast({ title: t.common.error, description: t.subjectManagement.addError, variant: 'destructive' });
+    } else if (data) {
+      toast({ title: t.common.success, description: t.subjectManagement.subjectAdded });
+      setSectionSubjects(prev => [...prev, { ...data, teacher_name: undefined }]);
+      setNewSubjectName('');
+      setIsAddingSubjectOpen(false);
+    }
+  };
+
+  const handleSectionSubjectUpdate = (updated: SectionSubject) => {
+    setSectionSubjects(prev => prev.map(ss => ss.id === updated.id ? updated : ss));
+  };
+
+  const handleSectionSubjectDelete = (id: string) => {
+    setSectionSubjects(prev => prev.filter(ss => ss.id !== id));
   };
 
   const handleBack = () => {
@@ -875,7 +943,7 @@ const AdminDashboard = () => {
                 </div>
                 
                 {/* Section Quick Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button 
                     variant="outline" 
                     className="gap-2"
@@ -903,132 +971,78 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {subjects.map((subject, index) => {
-                  const assignment = getAssignmentForSubject(subject.id);
-                  
-                  return (
-                    <motion.div
-                      key={subject.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">{SUBJECT_ICONS[subject.name] || '📚'}</span>
-                          <h3 className="font-bold text-lg">{subject.name}</h3>
-                        </div>
+              {/* Add Subject Button */}
+              <div className="flex justify-end">
+                <Dialog open={isAddingSubjectOpen} onOpenChange={setIsAddingSubjectOpen}>
+                  <Button 
+                    className="gradient-primary shadow-lg gap-2"
+                    onClick={() => setIsAddingSubjectOpen(true)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    {t.subjectManagement.addSubject}
+                  </Button>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t.subjectManagement.addSubject}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>{t.subjectManagement.subjectName}</Label>
+                        <Input
+                          value={newSubjectName}
+                          onChange={(e) => setNewSubjectName(e.target.value)}
+                          placeholder={t.subjectManagement.subjectNamePlaceholder}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
+                          autoFocus
+                        />
                       </div>
-                      
-                      {assignment ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">{t.admin.assignTeacher.split(' ')[0]}:</span>
-                            <span className="font-medium">{assignment.teacher_profiles.full_name}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">الحالة:</span>
-                            {getStatusBadge(assignment.status)}
-                          </div>
-                          {assignment.status === 'accepted' && (
-                            <Button 
-                              variant="outline" 
-                              className="w-full mt-2"
-                              onClick={() => handleSubjectClick(subject, assignment)}
-                            >
-                              <BookOpen className="w-4 h-4 ml-2" />
-                              {t.admin.lessons}
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <Dialog open={isAssigningTeacher && selectedSubjectForAssignment?.id === subject.id} onOpenChange={(open) => {
-                          setIsAssigningTeacher(open);
-                          if (!open) {
-                            setSelectedSubjectForAssignment(null);
-                            setSelectedTeacherId('');
-                            setTeacherSearchQuery('');
-                          }
-                        }}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              className="w-full mt-2"
-                              onClick={() => setSelectedSubjectForAssignment(subject)}
-                            >
-                              <Users className="w-4 h-4 ml-2" />
-                              {t.admin.assignTeacher}
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>{t.admin.assignTeacher} - {subject.name}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>{t.admin.selectTeacher}</Label>
-                                <div className="relative">
-                                  <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                                  <Input
-                                    value={teacherSearchQuery}
-                                    onChange={(e) => setTeacherSearchQuery(e.target.value)}
-                                    placeholder={t.admin.searchTeacher}
-                                    className={isRTL ? "pr-10" : "pl-10"}
-                                  />
-                                </div>
-                              </div>
-                              
-                              {teacherSearchQuery.trim() ? (
-                                <div className="max-h-60 overflow-y-auto space-y-2 border rounded-lg p-2">
-                                  {filteredTeachers.length === 0 ? (
-                                    <p className="text-center text-muted-foreground py-4">
-                                      {t.common.noResults}
-                                    </p>
-                                  ) : (
-                                    filteredTeachers.map((teacher) => (
-                                      <button
-                                        key={teacher.id}
-                                        onClick={() => {
-                                          setSelectedTeacherId(teacher.id);
-                                          setTeacherSearchQuery(teacher.full_name);
-                                        }}
-                                        className={`w-full p-3 rounded-lg text-right transition-colors ${
-                                          selectedTeacherId === teacher.id 
-                                            ? 'bg-primary text-primary-foreground' 
-                                            : 'bg-secondary/50 hover:bg-secondary'
-                                        }`}
-                                      >
-                                        <div className="font-medium">{teacher.full_name}</div>
-                                        <div className="text-sm opacity-80">
-                                          {teacher.subject} {teacher.email && `• ${teacher.email}`}
-                                        </div>
-                                      </button>
-                                    ))
-                                  )}
-                                </div>
-                              ) : (
-                                <p className="text-center text-muted-foreground py-4 border rounded-lg">
-                                  {t.admin.searchTeacher}
-                                </p>
-                              )}
-                              
-                              <Button 
-                                onClick={handleAssignTeacher} 
-                                className="w-full gradient-primary"
-                                disabled={isLoading || !selectedTeacherId}
-                              >
-                                {isLoading ? t.admin.assigningTeacher : t.admin.assignTeacher}
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </motion.div>
-                  );
-                })}
+                      <Button 
+                        onClick={handleAddSubject} 
+                        className="w-full gradient-primary"
+                        disabled={isLoading || !newSubjectName.trim()}
+                      >
+                        {isLoading ? t.admin.adding : t.common.add}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
+
+              {/* Subjects Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sectionSubjects.map((ss, index) => (
+                  <SubjectCard
+                    key={ss.id}
+                    sectionSubject={ss}
+                    teachers={teachers}
+                    index={index}
+                    onUpdate={handleSectionSubjectUpdate}
+                    onDelete={handleSectionSubjectDelete}
+                    onClick={ss.teacher_profile_id ? () => {
+                      // Find matching assignment to view lessons
+                      const assignment = assignments.find(a => 
+                        a.teacher_id === ss.teacher_profile_id && a.status === 'accepted'
+                      );
+                      if (assignment) {
+                        const subject = subjects.find(s => s.id === assignment.subject_id) || { id: ss.id, name: ss.subject_name };
+                        handleSubjectClick(subject, assignment);
+                      }
+                    } : undefined}
+                  />
+                ))}
+              </div>
+
+              {sectionSubjects.length === 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-16"
+                >
+                  <BookOpen className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg">{t.subjectManagement.noSubjectsYet}</p>
+                  <p className="text-muted-foreground/60 text-sm mt-1">{t.subjectManagement.addFirstSubject}</p>
+                </motion.div>
+              )}
             </motion.div>
           )}
 
