@@ -197,6 +197,48 @@ export type Database = {
           },
         ]
       }
+      section_subjects: {
+        Row: {
+          created_at: string
+          id: string
+          section_id: string
+          subject_name: string
+          teacher_profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section_id: string
+          subject_name: string
+          teacher_profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section_id?: string
+          subject_name?: string
+          teacher_profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "section_subjects_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "section_subjects_teacher_profile_id_fkey"
+            columns: ["teacher_profile_id"]
+            isOneToOne: false
+            referencedRelation: "teacher_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sections: {
         Row: {
           branch_id: string

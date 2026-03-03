@@ -309,6 +309,32 @@ export const en = {
     deleteError: 'Failed to delete section',
   },
 
+  // Subject Management
+  subjectManagement: {
+    addSubject: 'Add Subject',
+    subjectName: 'Subject Name',
+    subjectNamePlaceholder: 'Enter subject name',
+    subjectAdded: 'Subject added successfully',
+    subjectExists: 'This subject already exists in this section',
+    addError: 'Failed to add subject',
+    settings: 'Subject Settings',
+    changeName: 'Change Name',
+    changeTeacher: 'Change Teacher',
+    deleteSubject: 'Delete Subject',
+    deleteConfirm: 'Are you sure you want to delete this subject from the section?',
+    subjectDeleted: 'Subject deleted',
+    subjectUpdated: 'Subject updated',
+    deleteError: 'Failed to delete subject',
+    updateError: 'Failed to update subject',
+    noSubjectsYet: 'No subjects yet',
+    addFirstSubject: 'Add a new subject to get started',
+    newSubjectName: 'New name',
+    selectTeacher: 'Select a teacher',
+    noTeacher: 'No teacher',
+    teacherUpdated: 'Teacher updated',
+    nameUpdated: 'Subject name updated',
+  },
+
   // Install App
   install: {
     title: 'Install App',

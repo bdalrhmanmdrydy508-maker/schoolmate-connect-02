@@ -309,6 +309,32 @@ export const fr = {
     deleteError: 'Échec de la suppression de la section',
   },
 
+  // Subject Management
+  subjectManagement: {
+    addSubject: 'Ajouter une matière',
+    subjectName: 'Nom de la matière',
+    subjectNamePlaceholder: 'Entrez le nom de la matière',
+    subjectAdded: 'Matière ajoutée avec succès',
+    subjectExists: 'Cette matière existe déjà dans cette section',
+    addError: 'Échec de l\'ajout de la matière',
+    settings: 'Paramètres de la matière',
+    changeName: 'Changer le nom',
+    changeTeacher: 'Changer l\'enseignant',
+    deleteSubject: 'Supprimer la matière',
+    deleteConfirm: 'Êtes-vous sûr de vouloir supprimer cette matière de la section ?',
+    subjectDeleted: 'Matière supprimée',
+    subjectUpdated: 'Matière mise à jour',
+    deleteError: 'Échec de la suppression de la matière',
+    updateError: 'Échec de la mise à jour de la matière',
+    noSubjectsYet: 'Aucune matière pour le moment',
+    addFirstSubject: 'Ajoutez une nouvelle matière pour commencer',
+    newSubjectName: 'Nouveau nom',
+    selectTeacher: 'Sélectionner un enseignant',
+    noTeacher: 'Aucun enseignant',
+    teacherUpdated: 'Enseignant mis à jour',
+    nameUpdated: 'Nom de la matière mis à jour',
+  },
+
   // Install App
   install: {
     title: 'Installer l\'application',
