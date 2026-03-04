@@ -20,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
 import { MyProgram } from '@/components/MyProgram';
+import { TeacherSubjectManager } from '@/components/TeacherSubjectManager';
 
 interface TeacherProfile {
   id: string;
@@ -654,6 +655,11 @@ const TeacherDashboard = () => {
                   />
                 )}
 
+                {/* Subject Management for Teachers */}
+                {activeView === 'lessons' && (
+                  <TeacherSubjectManager sectionId={selectedSection.section_id} />
+                )}
+
                 {activeView === 'lessons' && (
                   <>
                     {/* Search Bar */}
@@ -684,7 +690,7 @@ const TeacherDashboard = () => {
                             <motion.button
                               key={lesson.id}
                               onClick={() => setSelectedLesson(lesson)}
-                              className="w-full p-4 rounded-lg bg-card border border-border/50 text-right hover:border-primary transition-colors"
+                              className="w-full p-4 rounded-lg bg-card border-2 border-border text-right hover:border-primary transition-colors"
                               whileHover={{ scale: 1.01 }}
                             >
                               <div className="flex items-center justify-between">
@@ -745,7 +751,7 @@ const TeacherDashboard = () => {
                       key={assignment.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-card border border-warning/50"
+                      className="p-4 rounded-xl bg-card border-2 border-warning/50"
                     >
                       <div className="flex items-center justify-between">
                         <div>

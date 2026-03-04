@@ -18,7 +18,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
-import { MyProgram } from '@/components/MyProgram';
+
 
 interface AdminProfile {
   full_name: string;
@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
-  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students' | 'section-program'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
@@ -535,7 +535,7 @@ const AdminDashboard = () => {
   };
 
   const handleBack = () => {
-    if (currentView === 'section-timetable' || currentView === 'section-students' || currentView === 'section-program') {
+    if (currentView === 'section-timetable' || currentView === 'section-students') {
       setCurrentView('section-detail');
     } else if (currentView === 'subject-lessons') {
       setCurrentView('section-detail');
@@ -746,7 +746,7 @@ const AdminDashboard = () => {
                     setSelectedLevel(level);
                     setCurrentView('branches');
                   }}
-                  className="group p-8 rounded-2xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all"
+                  className="group p-8 rounded-2xl bg-card border-2 border-border shadow-md hover:shadow-xl transition-all"
                 >
                   <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
                     <GraduationCap className="w-10 h-10 text-primary-foreground" />
@@ -785,7 +785,7 @@ const AdminDashboard = () => {
                         whileHover={{ scale: 1.02, x: 8 }}
                         disabled={isLoading}
                         onClick={() => handleBranchSelect(branch)}
-                        className="w-full p-5 rounded-xl bg-card border border-border/50 text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
+                        className="w-full p-5 rounded-xl bg-card border-2 border-border text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
                       >
                         <span className="font-semibold text-lg">{branch}</span>
                       </motion.button>
@@ -809,7 +809,7 @@ const AdminDashboard = () => {
                         whileHover={{ scale: 1.02, x: -8 }}
                         disabled={isLoading}
                         onClick={() => handleBranchSelect(branch)}
-                        className="w-full p-5 rounded-xl bg-card border border-border/50 text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
+                        className="w-full p-5 rounded-xl bg-card border-2 border-border text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
                       >
                         <span className="font-semibold text-lg">{branch}</span>
                       </motion.button>
@@ -960,14 +960,6 @@ const AdminDashboard = () => {
                     <Clock className="w-4 h-4" />
                     {t.admin.timetable}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="gap-2"
-                    onClick={() => setCurrentView('section-program')}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    {t.program.title}
-                  </Button>
                 </div>
               </div>
 
@@ -1056,7 +1048,7 @@ const AdminDashboard = () => {
               className="space-y-8"
             >
               {/* Teacher Info Header */}
-              <div className="bg-card rounded-xl border border-border/50 p-6">
+              <div className="bg-card rounded-xl border-2 border-border p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center">
                     <Users className="w-7 h-7 text-primary-foreground" />
@@ -1104,7 +1096,7 @@ const AdminDashboard = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                           onClick={() => setSelectedLesson(lesson)}
-                          className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all text-right"
+                          className="bg-card rounded-xl border-2 border-border p-5 hover:shadow-lg transition-all text-right"
                         >
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -1144,7 +1136,7 @@ const AdminDashboard = () => {
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-center py-12 bg-card rounded-xl border border-border/50"
+                      className="text-center py-12 bg-card rounded-xl border-2 border-border"
                     >
                       <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                       <p className="text-muted-foreground">{t.teacher.noLessonsFound}</p>
@@ -1154,7 +1146,7 @@ const AdminDashboard = () => {
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-center py-16 bg-card rounded-xl border border-border/50"
+                    className="text-center py-16 bg-card rounded-xl border-2 border-border"
                   >
                     <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                     <p className="text-muted-foreground text-lg">{t.admin.noLessonsYet}</p>
@@ -1185,35 +1177,6 @@ const AdminDashboard = () => {
             />
           )}
 
-          {/* Section Program View (read-only for admin) */}
-          {currentView === 'section-program' && selectedSection && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <Button variant="ghost" onClick={() => setCurrentView('section-detail')}>{t.common.back}</Button>
-                <h2 className="text-xl font-bold">{t.program.title} - {selectedSection.name}</h2>
-              </div>
-              {assignments.filter(a => a.status === 'accepted').length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground">
-                  <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>{t.program.noProgramYet}</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {assignments.filter(a => a.status === 'accepted').map(a => (
-                    <div key={a.id}>
-                      <h3 className="text-lg font-semibold mb-3">{a.teacher_profiles.full_name}</h3>
-                      <MyProgram
-                        sectionId={selectedSection.id}
-                        teacherId={a.teacher_id}
-                        readOnly={true}
-                        onBack={() => {}}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </AnimatePresence>
       </main>
     </div>
