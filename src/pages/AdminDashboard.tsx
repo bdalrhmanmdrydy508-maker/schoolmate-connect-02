@@ -960,14 +960,6 @@ const AdminDashboard = () => {
                     <Clock className="w-4 h-4" />
                     {t.admin.timetable}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="gap-2"
-                    onClick={() => setCurrentView('section-program')}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    {t.program.title}
-                  </Button>
                 </div>
               </div>
 
