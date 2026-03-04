@@ -1096,7 +1096,7 @@ const AdminDashboard = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                           onClick={() => setSelectedLesson(lesson)}
-                          className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all text-right"
+                          className="bg-card rounded-xl border-2 border-border p-5 hover:shadow-lg transition-all text-right"
                         >
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
