@@ -785,7 +785,7 @@ const AdminDashboard = () => {
                         whileHover={{ scale: 1.02, x: 8 }}
                         disabled={isLoading}
                         onClick={() => handleBranchSelect(branch)}
-                        className="w-full p-5 rounded-xl bg-card border border-border/50 text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
+                        className="w-full p-5 rounded-xl bg-card border-2 border-border text-right hover:border-primary hover:shadow-md transition-all disabled:opacity-50"
                       >
                         <span className="font-semibold text-lg">{branch}</span>
                       </motion.button>
