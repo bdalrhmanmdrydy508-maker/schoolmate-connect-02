@@ -1,17 +1,13 @@
-import fr from './translations/fr';
-import en from './translations/en';
 import ar from './translations/ar';
 
-export type Language = 'fr' | 'en' | 'ar';
-export type TranslationKeys = typeof fr;
+export type Language = 'ar';
+export type TranslationKeys = typeof ar;
 
 export const translations: Record<Language, TranslationKeys> = {
-  fr,
-  en,
-  ar: ar as unknown as TranslationKeys,
+  ar,
 };
 
-export const defaultLanguage: Language = 'fr';
+export const defaultLanguage: Language = 'ar';
 
 // Get nested translation value
 export function getTranslation(
@@ -25,7 +21,7 @@ export function getTranslation(
     if (result && typeof result === 'object' && key in result) {
       result = result[key];
     } else {
-      return path; // Return path if translation not found
+      return path;
     }
   }
   
@@ -41,4 +37,4 @@ export function formatTranslation(str: string, params: Record<string, string | n
   return result;
 }
 
-export { fr, en, ar };
+export { ar };

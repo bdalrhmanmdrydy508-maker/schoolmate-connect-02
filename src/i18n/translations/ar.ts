@@ -203,6 +203,7 @@ export const ar = {
     lessonsAndSessions: 'الدروس والحصص',
     noLessonsYet: 'لا توجد دروس بعد',
     duration: 'المدة',
+    viewOnly: 'للاطلاع فقط',
   },
 
   // Control Panel

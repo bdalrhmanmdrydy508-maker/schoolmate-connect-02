@@ -423,25 +423,6 @@ export const AdminSettings = ({ profile, onClose, onThemeChange, onProfileUpdate
             <h3 className="font-semibold text-lg">{t.settings.interfaceSettings}</h3>
             
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground" />
-                  <span>{t.settings.language}</span>
-                </div>
-                <Select 
-                  value={settings.language} 
-                  onValueChange={(v) => handleSettingChange('language', v)}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fr">{t.languages.fr}</SelectItem>
-                    <SelectItem value="en">{t.languages.en}</SelectItem>
-                    <SelectItem value="ar">{t.languages.ar}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
