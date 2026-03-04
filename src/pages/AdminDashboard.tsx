@@ -1048,7 +1048,7 @@ const AdminDashboard = () => {
               className="space-y-8"
             >
               {/* Teacher Info Header */}
-              <div className="bg-card rounded-xl border border-border/50 p-6">
+              <div className="bg-card rounded-xl border-2 border-border p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center">
                     <Users className="w-7 h-7 text-primary-foreground" />
