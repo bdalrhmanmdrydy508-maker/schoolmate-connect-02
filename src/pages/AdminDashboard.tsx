@@ -535,7 +535,7 @@ const AdminDashboard = () => {
   };
 
   const handleBack = () => {
-    if (currentView === 'section-timetable' || currentView === 'section-students' || currentView === 'section-program') {
+    if (currentView === 'section-timetable' || currentView === 'section-students') {
       setCurrentView('section-detail');
     } else if (currentView === 'subject-lessons') {
       setCurrentView('section-detail');
