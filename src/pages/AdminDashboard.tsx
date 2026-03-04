@@ -1136,7 +1136,7 @@ const AdminDashboard = () => {
                     <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-center py-12 bg-card rounded-xl border border-border/50"
+                      className="text-center py-12 bg-card rounded-xl border-2 border-border"
                     >
                       <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                       <p className="text-muted-foreground">{t.teacher.noLessonsFound}</p>
