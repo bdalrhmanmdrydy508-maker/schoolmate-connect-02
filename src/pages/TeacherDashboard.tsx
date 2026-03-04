@@ -690,7 +690,7 @@ const TeacherDashboard = () => {
                             <motion.button
                               key={lesson.id}
                               onClick={() => setSelectedLesson(lesson)}
-                              className="w-full p-4 rounded-lg bg-card border border-border/50 text-right hover:border-primary transition-colors"
+                              className="w-full p-4 rounded-lg bg-card border-2 border-border text-right hover:border-primary transition-colors"
                               whileHover={{ scale: 1.01 }}
                             >
                               <div className="flex items-center justify-between">
