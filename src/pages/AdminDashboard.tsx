@@ -746,7 +746,7 @@ const AdminDashboard = () => {
                     setSelectedLevel(level);
                     setCurrentView('branches');
                   }}
-                  className="group p-8 rounded-2xl bg-card border border-border/50 shadow-md hover:shadow-xl transition-all"
+                  className="group p-8 rounded-2xl bg-card border-2 border-border shadow-md hover:shadow-xl transition-all"
                 >
                   <div className="w-20 h-20 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
                     <GraduationCap className="w-10 h-10 text-primary-foreground" />
