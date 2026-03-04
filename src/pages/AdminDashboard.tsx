@@ -18,7 +18,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
-import { MyProgram } from '@/components/MyProgram';
+
 
 interface AdminProfile {
   full_name: string;
