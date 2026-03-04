@@ -751,7 +751,7 @@ const TeacherDashboard = () => {
                       key={assignment.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-card border border-warning/50"
+                      className="p-4 rounded-xl bg-card border-2 border-warning/50"
                     >
                       <div className="flex items-center justify-between">
                         <div>

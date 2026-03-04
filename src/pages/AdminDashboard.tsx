@@ -1146,7 +1146,7 @@ const AdminDashboard = () => {
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-center py-16 bg-card rounded-xl border border-border/50"
+                    className="text-center py-16 bg-card rounded-xl border-2 border-border"
                   >
                     <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                     <p className="text-muted-foreground text-lg">{t.admin.noLessonsYet}</p>

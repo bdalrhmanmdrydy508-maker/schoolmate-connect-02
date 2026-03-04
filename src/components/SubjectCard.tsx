@@ -136,7 +136,7 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
-        className="bg-card rounded-xl border border-border/50 p-5 hover:shadow-lg transition-all relative group"
+        className="bg-card rounded-xl border-2 border-border p-5 hover:shadow-lg transition-all relative group"
       >
         {/* Settings button - top-left */}
         <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} z-10`}>
