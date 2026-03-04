@@ -129,7 +129,7 @@ const AdminDashboard = () => {
   const [assignments, setAssignments] = useState<TeacherAssignment[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
   
-  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students' | 'section-program'>('levels');
+  const [currentView, setCurrentView] = useState<'levels' | 'branches' | 'sections' | 'section-detail' | 'subject-lessons' | 'section-timetable' | 'section-students'>('levels');
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const [selectedSection, setSelectedSection] = useState<Section | null>(null);
