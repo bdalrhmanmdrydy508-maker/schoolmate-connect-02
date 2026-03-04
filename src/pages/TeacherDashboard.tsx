@@ -655,6 +655,11 @@ const TeacherDashboard = () => {
                   />
                 )}
 
+                {/* Subject Management for Teachers */}
+                {activeView === 'lessons' && (
+                  <TeacherSubjectManager sectionId={selectedSection.section_id} />
+                )}
+
                 {activeView === 'lessons' && (
                   <>
                     {/* Search Bar */}
