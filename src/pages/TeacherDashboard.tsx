@@ -104,6 +104,21 @@ const TeacherDashboard = () => {
     }
   };
 
+  const fetchAdminNotifications = async () => {
+    if (!profile) return;
+    const { data } = await supabase
+      .from('admin_notifications')
+      .select('id, subject_name, message, created_at, is_read')
+      .eq('teacher_profile_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (data) setAdminNotifications(data);
+  };
+
+  const markNotificationRead = async (id: string) => {
+    await supabase.from('admin_notifications').update({ is_read: true }).eq('id', id);
+    setAdminNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+  };
+
   const handleThemeChange = (theme: string) => {
     const root = document.documentElement;
     if (theme === 'dark') {
