@@ -389,6 +389,20 @@ export const ar = {
     lessonDeleted: 'تم حذف الدرس',
   },
 
+  // Notifications
+  notifications: {
+    sendNotification: 'إرسال تنبيه',
+    sendToTeacher: 'إرسال تنبيه للأستاذ',
+    messagePlaceholder: 'اكتب رسالة التنبيه...',
+    send: 'إرسال',
+    sent: 'تم إرسال التنبيه بنجاح',
+    sendError: 'فشل إرسال التنبيه',
+    noTeacherToNotify: 'لا يوجد أستاذ مسند لهذه المادة',
+    newNotifications: 'إشعارات جديدة',
+    noNotifications: 'لا توجد إشعارات',
+    markAsRead: 'تم القراءة',
+  },
+
   // Languages
   languages: {
     ar: 'العربية',
