@@ -333,6 +333,7 @@ export const ar = {
     noTeacher: 'بدون أستاذ',
     teacherUpdated: 'تم تحديث الأستاذ',
     nameUpdated: 'تم تحديث اسم المادة',
+    assignTeacher: 'إسناد أستاذ',
   },
 
   // Install App
@@ -386,6 +387,20 @@ export const ar = {
     deleteLesson: 'حذف الدرس',
     deleteConfirm: 'هل أنت متأكد من حذف هذا الدرس؟',
     lessonDeleted: 'تم حذف الدرس',
+  },
+
+  // Notifications
+  notifications: {
+    sendNotification: 'إرسال تنبيه',
+    sendToTeacher: 'إرسال تنبيه للأستاذ',
+    messagePlaceholder: 'اكتب رسالة التنبيه...',
+    send: 'إرسال',
+    sent: 'تم إرسال التنبيه بنجاح',
+    sendError: 'فشل إرسال التنبيه',
+    noTeacherToNotify: 'لا يوجد أستاذ مسند لهذه المادة',
+    newNotifications: 'إشعارات جديدة',
+    noNotifications: 'لا توجد إشعارات',
+    markAsRead: 'تم القراءة',
   },
 
   // Languages

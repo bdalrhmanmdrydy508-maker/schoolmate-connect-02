@@ -62,6 +62,7 @@ const TeacherDashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students' | 'program'>('lessons');
   const [lessonSearchQuery, setLessonSearchQuery] = useState('');
+  const [adminNotifications, setAdminNotifications] = useState<{ id: string; subject_name: string; message: string; created_at: string; is_read: boolean }[]>([]);
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
@@ -80,6 +81,7 @@ const TeacherDashboard = () => {
   useEffect(() => {
     if (profile) {
       fetchAssignments();
+      fetchAdminNotifications();
     }
   }, [profile]);
 
@@ -100,6 +102,21 @@ const TeacherDashboard = () => {
       
       if (data) setProfile(data);
     }
+  };
+
+  const fetchAdminNotifications = async () => {
+    if (!profile) return;
+    const { data } = await supabase
+      .from('admin_notifications')
+      .select('id, subject_name, message, created_at, is_read')
+      .eq('teacher_profile_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (data) setAdminNotifications(data);
+  };
+
+  const markNotificationRead = async (id: string) => {
+    await supabase.from('admin_notifications').update({ is_read: true }).eq('id', id);
+    setAdminNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
   };
 
   const handleThemeChange = (theme: string) => {
@@ -336,11 +353,11 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {pendingAssignments.length > 0 && (
+              {(pendingAssignments.length > 0 || adminNotifications.filter(n => !n.is_read).length > 0) && (
                 <div className="relative">
                   <Bell className="w-5 h-5 text-warning animate-pulse" />
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                    {pendingAssignments.length}
+                    {pendingAssignments.length + adminNotifications.filter(n => !n.is_read).length}
                   </span>
                 </div>
               )}
@@ -736,15 +753,55 @@ const TeacherDashboard = () => {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Admin Notifications */}
+              {adminNotifications.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    {t.notifications?.newNotifications || 'إشعارات جديدة'}
+                  </h2>
+                  <div className="space-y-3">
+                    {adminNotifications.map((notif) => (
+                      <motion.div
+                        key={notif.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{notif.subject_name}</p>
+                            <p className="mt-1">{notif.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
+                            </p>
+                          </div>
+                          {!notif.is_read && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => markNotificationRead(notif.id)}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Assignments */}
               <h2 className="text-xl font-bold">{t.teacher.pendingAssignments}</h2>
               
-              {pendingAssignments.length === 0 ? (
+              {pendingAssignments.length === 0 && adminNotifications.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>{t.teacher.noNewAssignments}</p>
                 </div>
-              ) : (
+              ) : pendingAssignments.length === 0 ? null : (
                 <div className="space-y-4">
                   {pendingAssignments.map((assignment) => (
                     <motion.div
@@ -755,9 +812,7 @@ const TeacherDashboard = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold">
-                            {t.teacher.pendingAssignments}
-                          </p>
+                          <p className="font-semibold">{t.teacher.pendingAssignments}</p>
                           <p className="text-sm text-muted-foreground">
                             {(assignment as any).sections?.name} - {(assignment as any).subjects?.name}
                           </p>
