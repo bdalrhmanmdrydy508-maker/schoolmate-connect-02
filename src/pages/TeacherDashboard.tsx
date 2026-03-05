@@ -81,6 +81,7 @@ const TeacherDashboard = () => {
   useEffect(() => {
     if (profile) {
       fetchAssignments();
+      fetchAdminNotifications();
     }
   }, [profile]);
 
