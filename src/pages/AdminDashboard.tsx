@@ -968,75 +968,51 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-8"
+              className="space-y-6"
             >
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">{selectedSection.name}</h2>
-                    <p className="text-muted-foreground">{selectedBranch?.name} - {selectedLevel?.name}</p>
-                  </div>
-                </div>
-                
-                {/* Section Quick Actions */}
-                <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    variant="outline" 
-                    className="gap-2"
-                    onClick={() => setCurrentView('section-students')}
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    {t.admin.studentList}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="gap-2"
-                    onClick={() => setCurrentView('section-timetable')}
-                  >
-                    <Clock className="w-4 h-4" />
-                    {t.admin.timetable}
-                  </Button>
-                </div>
+              {/* Section Title */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">{selectedSection.name}</h2>
+                <p className="text-sm text-muted-foreground">{selectedBranch?.name} - {selectedLevel?.name}</p>
               </div>
 
-              {/* Add Subject Button */}
-              <div className="flex justify-end">
-                <Dialog open={isAddingSubjectOpen} onOpenChange={setIsAddingSubjectOpen}>
-                  <Button 
-                    className="gradient-primary shadow-lg gap-2"
-                    onClick={() => setIsAddingSubjectOpen(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t.subjectManagement.addSubject}
-                  </Button>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t.subjectManagement.addSubject}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>{t.subjectManagement.subjectName}</Label>
-                        <Input
-                          value={newSubjectName}
-                          onChange={(e) => setNewSubjectName(e.target.value)}
-                          placeholder={t.subjectManagement.subjectNamePlaceholder}
-                          onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
-                          autoFocus
-                        />
-                      </div>
-                      <Button 
-                        onClick={handleAddSubject} 
-                        className="w-full gradient-primary"
-                        disabled={isLoading || !newSubjectName.trim()}
-                      >
-                        {isLoading ? t.admin.adding : t.common.add}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+              {/* Equal buttons: Student List & Timetable */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="gap-2 h-12 text-base border-2"
+                  onClick={() => setCurrentView('section-students')}
+                >
+                  <ClipboardList className="w-5 h-5" />
+                  {t.admin.studentList}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 h-12 text-base border-2"
+                  onClick={() => setCurrentView('section-timetable')}
+                >
+                  <Clock className="w-5 h-5" />
+                  {t.admin.timetable}
+                </Button>
+              </div>
+
+              {/* Direct Add Subject Input */}
+              <div className="flex gap-2">
+                <Input
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  placeholder={t.subjectManagement.subjectNamePlaceholder}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleAddSubject} 
+                  className="gradient-primary gap-2"
+                  disabled={isLoading || !newSubjectName.trim()}
+                >
+                  <Plus className="w-4 h-4" />
+                  {t.common.add}
+                </Button>
               </div>
 
               {/* Subjects Grid */}
@@ -1049,15 +1025,21 @@ const AdminDashboard = () => {
                     index={index}
                     onUpdate={handleSectionSubjectUpdate}
                     onDelete={handleSectionSubjectDelete}
-                    onClick={ss.teacher_profile_id ? () => {
-                      // Find matching assignment to view lessons
-                      const assignment = assignments.find(a => 
-                        a.teacher_id === ss.teacher_profile_id && a.status === 'accepted'
-                      );
-                      if (assignment) {
-                        const subject = subjects.find(s => s.id === assignment.subject_id) || { id: ss.id, name: ss.subject_name };
-                        handleSubjectClick(subject, assignment);
+                    onClick={() => {
+                      if (ss.teacher_profile_id) {
+                        const assignment = assignments.find(a => 
+                          a.teacher_id === ss.teacher_profile_id && a.status === 'accepted'
+                        );
+                        if (assignment) {
+                          const subject = subjects.find(s => s.id === assignment.subject_id) || { id: ss.id, name: ss.subject_name };
+                          handleSubjectClick(subject, assignment);
+                        }
                       }
+                    }}
+                    onNotify={ss.teacher_profile_id ? () => {
+                      setNotificationSubject(ss);
+                      setNotificationMessage('');
+                      setShowNotificationDialog(true);
                     } : undefined}
                   />
                 ))}
@@ -1074,6 +1056,39 @@ const AdminDashboard = () => {
                   <p className="text-muted-foreground/60 text-sm mt-1">{t.subjectManagement.addFirstSubject}</p>
                 </motion.div>
               )}
+
+              {/* Send Notification Dialog */}
+              <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Bell className="w-5 h-5" />
+                      {t.notifications.sendToTeacher}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    {notificationSubject && (
+                      <p className="text-sm text-muted-foreground">
+                        {notificationSubject.subject_name} → {notificationSubject.teacher_name}
+                      </p>
+                    )}
+                    <Textarea
+                      value={notificationMessage}
+                      onChange={(e) => setNotificationMessage(e.target.value)}
+                      placeholder={t.notifications.messagePlaceholder}
+                      rows={4}
+                    />
+                    <Button 
+                      onClick={handleSendNotification} 
+                      className="w-full gradient-primary gap-2"
+                      disabled={isLoading || !notificationMessage.trim()}
+                    >
+                      <Send className="w-4 h-4" />
+                      {t.notifications.send}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </motion.div>
           )}
 
