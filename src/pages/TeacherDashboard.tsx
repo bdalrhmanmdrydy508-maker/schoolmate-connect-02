@@ -753,15 +753,55 @@ const TeacherDashboard = () => {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Admin Notifications */}
+              {adminNotifications.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    {t.notifications?.newNotifications || 'إشعارات جديدة'}
+                  </h2>
+                  <div className="space-y-3">
+                    {adminNotifications.map((notif) => (
+                      <motion.div
+                        key={notif.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{notif.subject_name}</p>
+                            <p className="mt-1">{notif.message}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
+                            </p>
+                          </div>
+                          {!notif.is_read && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => markNotificationRead(notif.id)}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Assignments */}
               <h2 className="text-xl font-bold">{t.teacher.pendingAssignments}</h2>
               
-              {pendingAssignments.length === 0 ? (
+              {pendingAssignments.length === 0 && adminNotifications.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>{t.teacher.noNewAssignments}</p>
                 </div>
-              ) : (
+              ) : pendingAssignments.length === 0 ? null : (
                 <div className="space-y-4">
                   {pendingAssignments.map((assignment) => (
                     <motion.div
@@ -772,9 +812,7 @@ const TeacherDashboard = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-semibold">
-                            {t.teacher.pendingAssignments}
-                          </p>
+                          <p className="font-semibold">{t.teacher.pendingAssignments}</p>
                           <p className="text-sm text-muted-foreground">
                             {(assignment as any).sections?.name} - {(assignment as any).subjects?.name}
                           </p>
