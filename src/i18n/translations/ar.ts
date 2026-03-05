@@ -333,6 +333,7 @@ export const ar = {
     noTeacher: 'بدون أستاذ',
     teacherUpdated: 'تم تحديث الأستاذ',
     nameUpdated: 'تم تحديث اسم المادة',
+    assignTeacher: 'إسناد أستاذ',
   },
 
   // Install App

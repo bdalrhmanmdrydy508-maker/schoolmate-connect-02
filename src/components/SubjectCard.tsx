@@ -157,7 +157,7 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowTeacherDialog(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                {t.subjectManagement.changeTeacher}
+                {sectionSubject.teacher_profile_id ? t.subjectManagement.changeTeacher : t.subjectManagement.assignTeacher}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
