@@ -537,6 +537,42 @@ const AdminDashboard = () => {
     setSectionSubjects(prev => prev.filter(ss => ss.id !== id));
   };
 
+  const handleSendNotification = async () => {
+    if (!notificationMessage.trim() || !notificationSubject || !selectedSection) return;
+    if (!notificationSubject.teacher_profile_id) {
+      toast({ title: t.common.warning, description: t.notifications.noTeacherToNotify, variant: 'destructive' });
+      return;
+    }
+    setIsLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setIsLoading(false); return; }
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!adminProfile) { setIsLoading(false); return; }
+
+    const { error } = await supabase
+      .from('admin_notifications')
+      .insert({
+        admin_id: adminProfile.id,
+        teacher_profile_id: notificationSubject.teacher_profile_id,
+        section_id: selectedSection.id,
+        subject_name: notificationSubject.subject_name,
+        message: notificationMessage.trim(),
+      });
+    setIsLoading(false);
+    if (error) {
+      toast({ title: t.common.error, description: t.notifications.sendError, variant: 'destructive' });
+    } else {
+      toast({ title: t.common.success, description: t.notifications.sent });
+      setNotificationMessage('');
+      setShowNotificationDialog(false);
+      setNotificationSubject(null);
+    }
+  };
+
   const handleBack = () => {
     if (currentView === 'section-timetable' || currentView === 'section-students') {
       setCurrentView('section-detail');
