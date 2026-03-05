@@ -62,6 +62,7 @@ const TeacherDashboard = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students' | 'program'>('lessons');
   const [lessonSearchQuery, setLessonSearchQuery] = useState('');
+  const [adminNotifications, setAdminNotifications] = useState<{ id: string; subject_name: string; message: string; created_at: string; is_read: boolean }[]>([]);
 
   // Lesson form
   const [lessonTitle, setLessonTitle] = useState('');
