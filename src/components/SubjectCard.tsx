@@ -62,7 +62,7 @@ const SUBJECT_ICONS: Record<string, string> = {
   'تاريخ وجغرافيا': '🌍', 'فلسفة': '🤔', 'اقتصاد': '📊', 'قانون': '⚖️',
 };
 
-export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelete, onClick }: SubjectCardProps) => {
+export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelete, onClick, onNotify }: SubjectCardProps) => {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
