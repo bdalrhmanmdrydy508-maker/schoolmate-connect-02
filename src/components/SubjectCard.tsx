@@ -52,7 +52,6 @@ interface SubjectCardProps {
   onUpdate: (updated: SectionSubject) => void;
   onDelete: (id: string) => void;
   onClick?: () => void;
-  onNotify?: () => void;
 }
 
 const SUBJECT_ICONS: Record<string, string> = {
