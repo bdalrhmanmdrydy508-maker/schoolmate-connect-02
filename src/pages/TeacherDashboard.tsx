@@ -769,50 +769,10 @@ const TeacherDashboard = () => {
                 </div>
               )}
 
-              {/* Pending Assignments */}
-              <h2 className="text-xl font-bold">{t.teacher.pendingAssignments}</h2>
-              
-              {pendingAssignments.length === 0 && adminNotifications.length === 0 ? (
+              {adminNotifications.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
                   <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>{t.teacher.noNewAssignments}</p>
-                </div>
-              ) : pendingAssignments.length === 0 ? null : (
-                <div className="space-y-4">
-                  {pendingAssignments.map((assignment) => (
-                    <motion.div
-                      key={assignment.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-card border-2 border-warning/50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">{t.teacher.pendingAssignments}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {(assignment as any).sections?.name} - {(assignment as any).subjects?.name}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive border-destructive/30"
-                            onClick={() => handleAssignmentResponse(assignment.id, false)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90"
-                            onClick={() => handleAssignmentResponse(assignment.id, true)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
                 </div>
               )}
             </div>
