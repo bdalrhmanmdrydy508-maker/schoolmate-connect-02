@@ -20,7 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
 import { MyProgram } from '@/components/MyProgram';
-import { TeacherSubjectManager } from '@/components/TeacherSubjectManager';
+
 
 interface TeacherProfile {
   id: string;
@@ -672,10 +672,6 @@ const TeacherDashboard = () => {
                   />
                 )}
 
-                {/* Subject Management for Teachers */}
-                {activeView === 'lessons' && (
-                  <TeacherSubjectManager sectionId={selectedSection.section_id} />
-                )}
 
                 {activeView === 'lessons' && (
                   <>
