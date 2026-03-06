@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Pencil, UserPlus, Trash2, X, Check, Loader2, Search, Bell } from 'lucide-react';
+import { Settings, Pencil, UserPlus, Trash2, X, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

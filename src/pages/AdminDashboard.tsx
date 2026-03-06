@@ -1053,38 +1053,6 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
 
-              {/* Send Notification Dialog */}
-              <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Bell className="w-5 h-5" />
-                      {t.notifications.sendToTeacher}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    {notificationSubject && (
-                      <p className="text-sm text-muted-foreground">
-                        {notificationSubject.subject_name} → {notificationSubject.teacher_name}
-                      </p>
-                    )}
-                    <Textarea
-                      value={notificationMessage}
-                      onChange={(e) => setNotificationMessage(e.target.value)}
-                      placeholder={t.notifications.messagePlaceholder}
-                      rows={4}
-                    />
-                    <Button 
-                      onClick={handleSendNotification} 
-                      className="w-full gradient-primary gap-2"
-                      disabled={isLoading || !notificationMessage.trim()}
-                    >
-                      <Send className="w-4 h-4" />
-                      {t.notifications.send}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </motion.div>
           )}
 
