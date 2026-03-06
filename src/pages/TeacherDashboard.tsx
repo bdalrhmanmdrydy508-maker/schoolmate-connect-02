@@ -55,7 +55,7 @@ const TeacherDashboard = () => {
   const { t, isRTL } = useLanguage();
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
+  
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
