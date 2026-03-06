@@ -1086,6 +1086,56 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Notify Teacher */}
+              {selectedTeacherAssignment && (
+                <div className="bg-card rounded-xl border-2 border-border p-4">
+                  {showNotificationDialog ? (
+                    <div className="flex gap-2 items-end">
+                      <Input
+                        value={notificationMessage}
+                        onChange={(e) => setNotificationMessage(e.target.value)}
+                        placeholder={t.notifications.messagePlaceholder}
+                        className="flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendNotification()}
+                        autoFocus
+                      />
+                      <Button
+                        onClick={handleSendNotification}
+                        className="gradient-primary gap-1"
+                        size="sm"
+                        disabled={isLoading || !notificationMessage.trim()}
+                      >
+                        <Send className="w-4 h-4" />
+                        {t.notifications.send}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowNotificationDialog(false); setNotificationMessage(''); }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="gap-2 w-full"
+                      onClick={() => {
+                        // Find the matching section subject
+                        const ss = sectionSubjects.find(s => s.teacher_profile_id === selectedTeacherAssignment.teacher_id);
+                        if (ss) {
+                          setNotificationSubject(ss);
+                          setShowNotificationDialog(true);
+                        }
+                      }}
+                    >
+                      <Bell className="w-4 h-4" />
+                      {t.notifications.sendToTeacher}
+                    </Button>
+                  )}
+                </div>
+              )}
+
               {/* Search Bar */}
               <div className="relative">
                 <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
