@@ -188,18 +188,6 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
           )}
         </div>
 
-        {/* Notify teacher button */}
-        {onNotify && sectionSubject.teacher_profile_id && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity gap-1 text-xs"
-            onClick={(e) => { e.stopPropagation(); onNotify(); }}
-          >
-            <Bell className="w-3.5 h-3.5" />
-            {t.notifications?.sendNotification || 'تنبيه'}
-          </Button>
-        )}
       </motion.div>
 
       {/* Rename Dialog */}
