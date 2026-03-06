@@ -483,7 +483,7 @@ const AdminDashboard = () => {
         section_id: selectedSection.id,
         subject_id: selectedSubjectForAssignment.id,
         admin_id: adminProfile.id,
-        status: 'pending',
+        status: 'accepted',
       });
 
     setIsLoading(false);
