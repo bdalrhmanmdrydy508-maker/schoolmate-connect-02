@@ -139,7 +139,7 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
         className="bg-card rounded-xl border-2 border-border p-5 hover:shadow-lg transition-all relative group"
       >
         {/* Settings button - top-left */}
-        <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} z-10`}>
+        <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} z-10`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
