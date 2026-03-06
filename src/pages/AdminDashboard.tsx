@@ -1036,7 +1036,7 @@ const AdminDashboard = () => {
                         }
                       }
                     }}
-                    onNotify={undefined}
+                    
                   />
                 ))}
               </div>
