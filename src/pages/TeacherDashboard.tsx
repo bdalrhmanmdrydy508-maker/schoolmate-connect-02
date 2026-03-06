@@ -55,7 +55,7 @@ const TeacherDashboard = () => {
   const { t, isRTL } = useLanguage();
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
+  
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -151,9 +151,7 @@ const TeacherDashboard = () => {
 
     if (data) {
       const accepted = data.filter(a => a.status === 'accepted') as unknown as Assignment[];
-      const pending = data.filter(a => a.status === 'pending') as unknown as Assignment[];
       setAssignments(accepted);
-      setPendingAssignments(pending);
     }
   };
 
@@ -201,24 +199,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  const handleAssignmentResponse = async (assignmentId: string, accept: boolean) => {
-    const status = accept ? 'accepted' : 'rejected';
-    
-    const { error } = await supabase
-      .from('teacher_assignments')
-      .update({ status })
-      .eq('id', assignmentId);
-
-    if (error) {
-      toast({ title: 'خطأ', description: 'فشل تحديث الطلب', variant: 'destructive' });
-    } else {
-      toast({ 
-        title: accept ? 'تم القبول' : 'تم الرفض', 
-        description: accept ? 'تم قبول الإسناد بنجاح' : 'تم رفض الإسناد' 
-      });
-      fetchAssignments();
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -353,11 +333,11 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {(pendingAssignments.length > 0 || adminNotifications.filter(n => !n.is_read).length > 0) && (
+              {adminNotifications.filter(n => !n.is_read).length > 0 && (
                 <div className="relative">
                   <Bell className="w-5 h-5 text-warning animate-pulse" />
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                    {pendingAssignments.length + adminNotifications.filter(n => !n.is_read).length}
+                    {adminNotifications.filter(n => !n.is_read).length}
                   </span>
                 </div>
               )}
@@ -412,9 +392,9 @@ const TeacherDashboard = () => {
             <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
             <TabsTrigger value="notifications" className="relative">
               {t.teacher.notifications}
-              {pendingAssignments.length > 0 && (
+              {adminNotifications.filter(n => !n.is_read).length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                  {pendingAssignments.length}
+                  {adminNotifications.filter(n => !n.is_read).length}
                 </span>
               )}
             </TabsTrigger>
@@ -789,50 +769,10 @@ const TeacherDashboard = () => {
                 </div>
               )}
 
-              {/* Pending Assignments */}
-              <h2 className="text-xl font-bold">{t.teacher.pendingAssignments}</h2>
-              
-              {pendingAssignments.length === 0 && adminNotifications.length === 0 ? (
+              {adminNotifications.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
                   <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>{t.teacher.noNewAssignments}</p>
-                </div>
-              ) : pendingAssignments.length === 0 ? null : (
-                <div className="space-y-4">
-                  {pendingAssignments.map((assignment) => (
-                    <motion.div
-                      key={assignment.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-xl bg-card border-2 border-warning/50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">{t.teacher.pendingAssignments}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {(assignment as any).sections?.name} - {(assignment as any).subjects?.name}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive border-destructive/30"
-                            onClick={() => handleAssignmentResponse(assignment.id, false)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90"
-                            onClick={() => handleAssignmentResponse(assignment.id, true)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
                 </div>
               )}
             </div>
