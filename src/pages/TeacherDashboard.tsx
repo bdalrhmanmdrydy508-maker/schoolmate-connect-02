@@ -392,9 +392,9 @@ const TeacherDashboard = () => {
             <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
             <TabsTrigger value="notifications" className="relative">
               {t.teacher.notifications}
-              {pendingAssignments.length > 0 && (
+              {adminNotifications.filter(n => !n.is_read).length > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                  {pendingAssignments.length}
+                  {adminNotifications.filter(n => !n.is_read).length}
                 </span>
               )}
             </TabsTrigger>
