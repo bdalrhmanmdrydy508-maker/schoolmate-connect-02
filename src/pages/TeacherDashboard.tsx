@@ -151,9 +151,7 @@ const TeacherDashboard = () => {
 
     if (data) {
       const accepted = data.filter(a => a.status === 'accepted') as unknown as Assignment[];
-      const pending = data.filter(a => a.status === 'pending') as unknown as Assignment[];
       setAssignments(accepted);
-      setPendingAssignments(pending);
     }
   };
 
