@@ -1036,11 +1036,7 @@ const AdminDashboard = () => {
                         }
                       }
                     }}
-                    onNotify={ss.teacher_profile_id ? () => {
-                      setNotificationSubject(ss);
-                      setNotificationMessage('');
-                      setShowNotificationDialog(true);
-                    } : undefined}
+                    onNotify={undefined}
                   />
                 ))}
               </div>
