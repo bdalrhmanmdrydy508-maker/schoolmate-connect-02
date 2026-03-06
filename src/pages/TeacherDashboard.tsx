@@ -199,22 +199,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  const handleAssignmentResponse = async (assignmentId: string, accept: boolean) => {
-    const status = accept ? 'accepted' : 'rejected';
-    
-    const { error } = await supabase
-      .from('teacher_assignments')
-      .update({ status })
-      .eq('id', assignmentId);
-
-    if (error) {
-      toast({ title: 'خطأ', description: 'فشل تحديث الطلب', variant: 'destructive' });
-    } else {
-      toast({ 
-        title: accept ? 'تم القبول' : 'تم الرفض', 
-        description: accept ? 'تم قبول الإسناد بنجاح' : 'تم رفض الإسناد' 
-      });
-      fetchAssignments();
     }
   };
 
