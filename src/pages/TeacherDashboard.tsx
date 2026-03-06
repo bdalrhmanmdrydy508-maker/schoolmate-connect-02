@@ -333,11 +333,11 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {(pendingAssignments.length > 0 || adminNotifications.filter(n => !n.is_read).length > 0) && (
+              {adminNotifications.filter(n => !n.is_read).length > 0 && (
                 <div className="relative">
                   <Bell className="w-5 h-5 text-warning animate-pulse" />
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                    {pendingAssignments.length + adminNotifications.filter(n => !n.is_read).length}
+                    {adminNotifications.filter(n => !n.is_read).length}
                   </span>
                 </div>
               )}
