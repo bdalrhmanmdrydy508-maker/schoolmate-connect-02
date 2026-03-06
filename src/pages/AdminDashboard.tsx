@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -560,7 +560,7 @@ const AdminDashboard = () => {
         teacher_profile_id: notificationSubject.teacher_profile_id,
         section_id: selectedSection.id,
         subject_name: notificationSubject.subject_name,
-        message: notificationMessage.trim(),
+        message: `تنبيه من المدير – القسم: ${selectedSection.name}: ${notificationMessage.trim()}`,
       });
     setIsLoading(false);
     if (error) {
@@ -1036,11 +1036,7 @@ const AdminDashboard = () => {
                         }
                       }
                     }}
-                    onNotify={ss.teacher_profile_id ? () => {
-                      setNotificationSubject(ss);
-                      setNotificationMessage('');
-                      setShowNotificationDialog(true);
-                    } : undefined}
+                    
                   />
                 ))}
               </div>
@@ -1057,38 +1053,6 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
 
-              {/* Send Notification Dialog */}
-              <Dialog open={showNotificationDialog} onOpenChange={setShowNotificationDialog}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Bell className="w-5 h-5" />
-                      {t.notifications.sendToTeacher}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    {notificationSubject && (
-                      <p className="text-sm text-muted-foreground">
-                        {notificationSubject.subject_name} → {notificationSubject.teacher_name}
-                      </p>
-                    )}
-                    <Textarea
-                      value={notificationMessage}
-                      onChange={(e) => setNotificationMessage(e.target.value)}
-                      placeholder={t.notifications.messagePlaceholder}
-                      rows={4}
-                    />
-                    <Button 
-                      onClick={handleSendNotification} 
-                      className="w-full gradient-primary gap-2"
-                      disabled={isLoading || !notificationMessage.trim()}
-                    >
-                      <Send className="w-4 h-4" />
-                      {t.notifications.send}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </motion.div>
           )}
 
@@ -1121,6 +1085,56 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Notify Teacher */}
+              {selectedTeacherAssignment && (
+                <div className="bg-card rounded-xl border-2 border-border p-4">
+                  {showNotificationDialog ? (
+                    <div className="flex gap-2 items-end">
+                      <Input
+                        value={notificationMessage}
+                        onChange={(e) => setNotificationMessage(e.target.value)}
+                        placeholder={t.notifications.messagePlaceholder}
+                        className="flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendNotification()}
+                        autoFocus
+                      />
+                      <Button
+                        onClick={handleSendNotification}
+                        className="gradient-primary gap-1"
+                        size="sm"
+                        disabled={isLoading || !notificationMessage.trim()}
+                      >
+                        <Send className="w-4 h-4" />
+                        {t.notifications.send}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowNotificationDialog(false); setNotificationMessage(''); }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="gap-2 w-full"
+                      onClick={() => {
+                        // Find the matching section subject
+                        const ss = sectionSubjects.find(s => s.teacher_profile_id === selectedTeacherAssignment.teacher_id);
+                        if (ss) {
+                          setNotificationSubject(ss);
+                          setShowNotificationDialog(true);
+                        }
+                      }}
+                    >
+                      <Bell className="w-4 h-4" />
+                      {t.notifications.sendToTeacher}
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {/* Search Bar */}
               <div className="relative">

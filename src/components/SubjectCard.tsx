@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Pencil, UserPlus, Trash2, X, Check, Loader2, Search, Bell } from 'lucide-react';
+import { Settings, Pencil, UserPlus, Trash2, X, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,7 +52,6 @@ interface SubjectCardProps {
   onUpdate: (updated: SectionSubject) => void;
   onDelete: (id: string) => void;
   onClick?: () => void;
-  onNotify?: () => void;
 }
 
 const SUBJECT_ICONS: Record<string, string> = {
@@ -62,7 +61,7 @@ const SUBJECT_ICONS: Record<string, string> = {
   'تاريخ وجغرافيا': '🌍', 'فلسفة': '🤔', 'اقتصاد': '📊', 'قانون': '⚖️',
 };
 
-export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelete, onClick, onNotify }: SubjectCardProps) => {
+export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelete, onClick }: SubjectCardProps) => {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
@@ -146,7 +145,7 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-8 w-8"
               >
                 <Settings className="w-4 h-4" />
               </Button>
@@ -189,18 +188,6 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
           )}
         </div>
 
-        {/* Notify teacher button */}
-        {onNotify && sectionSubject.teacher_profile_id && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity gap-1 text-xs"
-            onClick={(e) => { e.stopPropagation(); onNotify(); }}
-          >
-            <Bell className="w-3.5 h-3.5" />
-            {t.notifications?.sendNotification || 'تنبيه'}
-          </Button>
-        )}
       </motion.div>
 
       {/* Rename Dialog */}
