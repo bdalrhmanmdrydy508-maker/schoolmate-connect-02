@@ -456,58 +456,26 @@ const TeacherDashboard = () => {
               </motion.div>
             ) : (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-40 section-detail-bg overflow-y-auto"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-6"
               >
-                {/* Minimal Top Bar */}
-                <header className="sticky top-0 z-50 glass-dark border-b border-border/30">
-                  <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-foreground">{profile?.full_name}</span>
-                      <Badge variant="secondary" className="text-xs">{(selectedSection as any).subjects?.name}</Badge>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={signOut}>
-                      <LogOut className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </header>
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}>
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                    {t.teacher.backToSections}
+                  </Button>
+                  <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
+                </div>
 
-                {/* Section Header - Glassmorphism */}
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mx-4 mt-4 rounded-2xl p-6 relative overflow-hidden"
-                  style={{ background: 'linear-gradient(135deg, hsl(220 50% 25%), hsl(270 40% 30%))' }}
-                >
-                  <div className="absolute inset-0 backdrop-blur-sm bg-white/5" />
-                  <div className="relative flex items-center justify-between">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
-                      className="w-10 h-10 rounded-full flex items-center justify-center border border-cyan-400/50 neon-cyan bg-cyan-500/10"
-                    >
-                      <ChevronRight className="w-5 h-5 text-cyan-300" />
-                    </motion.button>
-                    <h2 className="text-xl font-bold text-white">{(selectedSection as any).sections?.name}</h2>
-                    <div className="w-10" /> {/* spacer */}
-                  </div>
-                </motion.div>
-
-                {/* Action Buttons - 4 equal cards */}
-                <div className="grid grid-cols-4 gap-3 mx-4 mt-4">
-                  {/* Add Lesson */}
+                {/* Action Buttons - responsive grid, equal sizing */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Dialog open={isAddingLesson} onOpenChange={setIsAddingLesson}>
                     <DialogTrigger asChild>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 dark:bg-cyan-500/10 neon-cyan transition-all aspect-square"
-                      >
-                        <Upload className="w-7 h-7 text-cyan-500 dark:text-cyan-400" />
-                        <span className="text-xs font-medium text-cyan-700 dark:text-cyan-300 text-center leading-tight">{t.teacher.addLesson}</span>
-                      </motion.button>
+                      <Button variant="outline" className="h-20 flex-col gap-2 border-2 border-border">
+                        <Upload className="w-6 h-6 text-primary" />
+                        <span className="text-xs font-medium">{t.teacher.addLesson}</span>
+                      </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-lg">
                       <DialogHeader>
@@ -630,142 +598,127 @@ const TeacherDashboard = () => {
                     </DialogContent>
                   </Dialog>
 
-                  {/* Timetable */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col gap-2 border-2 border-border"
                     onClick={() => setActiveView('timetable')}
-                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 dark:bg-blue-500/10 neon-blue transition-all aspect-square"
                   >
-                    <Clock className="w-7 h-7 text-blue-500 dark:text-blue-400" />
-                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300 text-center leading-tight">{t.admin.timetable}</span>
-                  </motion.button>
+                    <Clock className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-medium">{t.admin.timetable}</span>
+                  </Button>
 
-                  {/* Students */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col gap-2 border-2 border-border"
                     onClick={() => setActiveView('students')}
-                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 dark:bg-purple-500/10 neon-purple transition-all aspect-square"
                   >
-                    <Users className="w-7 h-7 text-purple-500 dark:text-purple-400" />
-                    <span className="text-xs font-medium text-purple-700 dark:text-purple-300 text-center leading-tight">{t.admin.studentList}</span>
-                  </motion.button>
+                    <Users className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-medium">{t.admin.studentList}</span>
+                  </Button>
 
-                  {/* My Program */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col gap-2 border-2 border-border"
                     onClick={() => setActiveView('program')}
-                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 to-orange-500/10 neon-gradient transition-all aspect-square"
                   >
-                    <BookOpen className="w-7 h-7 text-purple-500 dark:text-purple-400" />
-                    <span className="text-xs font-medium text-purple-700 dark:text-purple-300 text-center leading-tight">{t.program.title}</span>
-                  </motion.button>
+                    <BookOpen className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-medium">{t.program.title}</span>
+                  </Button>
                 </div>
 
                 {/* Conditional Views */}
-                <div className="mx-4 mt-4 pb-8">
-                  {activeView === 'timetable' && (
-                    <Timetable
-                      sectionId={selectedSection.section_id}
-                      sectionName={(selectedSection as any).sections?.name || ''}
-                      onBack={() => setActiveView('lessons')}
-                      readOnly={true}
-                    />
-                  )}
+                {activeView === 'timetable' && (
+                  <Timetable
+                    sectionId={selectedSection.section_id}
+                    sectionName={(selectedSection as any).sections?.name || ''}
+                    onBack={() => setActiveView('lessons')}
+                    readOnly={true}
+                  />
+                )}
 
-                  {activeView === 'program' && profile && (
-                    <MyProgram
-                      sectionId={selectedSection.section_id}
-                      teacherId={profile.id}
-                      readOnly={false}
-                      onBack={() => setActiveView('lessons')}
-                    />
-                  )}
+                {activeView === 'program' && profile && (
+                  <MyProgram
+                    sectionId={selectedSection.section_id}
+                    teacherId={profile.id}
+                    readOnly={false}
+                    onBack={() => setActiveView('lessons')}
+                  />
+                )}
 
-                  {activeView === 'students' && (
-                    <StudentList
-                      sectionId={selectedSection.section_id}
-                      sectionName={(selectedSection as any).sections?.name || ''}
-                      onBack={() => setActiveView('lessons')}
-                      readOnly={true}
-                    />
-                  )}
+                {activeView === 'students' && (
+                  <StudentList
+                    sectionId={selectedSection.section_id}
+                    sectionName={(selectedSection as any).sections?.name || ''}
+                    onBack={() => setActiveView('lessons')}
+                    readOnly={true}
+                  />
+                )}
 
-                  {activeView === 'lessons' && (
-                    <>
-                      {/* Search Bar - Neon style */}
-                      <div className="relative mt-2">
-                        <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500 dark:text-cyan-400`} />
-                        <Input
-                          value={lessonSearchQuery}
-                          onChange={(e) => setLessonSearchQuery(e.target.value)}
-                          placeholder={t.teacher.searchLessons}
-                          className={`${isRTL ? "pr-10" : "pl-10"} border-cyan-500/30 focus:border-cyan-400 dark:bg-card/50 backdrop-blur-sm`}
-                        />
-                      </div>
+                {activeView === 'lessons' && (
+                  <>
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+                      <Input
+                        value={lessonSearchQuery}
+                        onChange={(e) => setLessonSearchQuery(e.target.value)}
+                        placeholder={t.teacher.searchLessons}
+                        className={isRTL ? "pr-10" : "pl-10"}
+                      />
+                    </div>
 
-                      {/* Lessons list */}
-                      <div className="space-y-3 mt-4">
-                        <h3 className="font-semibold text-foreground">{t.teacher.lessonsAndSessions}</h3>
-                        {lessons.length === 0 ? (
-                          <p className="text-muted-foreground text-center py-8">
-                            {t.teacher.noLessonsYet}
-                          </p>
-                        ) : filteredLessons.length === 0 ? (
-                          <p className="text-muted-foreground text-center py-8">
-                            {t.teacher.noLessonsFound}
-                          </p>
-                        ) : (
-                          <div className="space-y-3">
-                            {filteredLessons.map((lesson, index) => (
-                              <motion.button
-                                key={lesson.id}
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                                onClick={() => setSelectedLesson(lesson)}
-                                className="w-full p-4 rounded-xl bg-card/80 dark:bg-card/60 backdrop-blur-sm border border-border/50 text-right hover:border-primary/50 transition-all relative overflow-hidden group"
-                                whileHover={{ scale: 1.01 }}
-                              >
-                                {/* Side gradient bar */}
-                                <div className={`absolute ${isRTL ? 'right-0' : 'left-0'} top-0 bottom-0 w-1 rounded-full`} style={{ background: 'linear-gradient(180deg, hsl(180 70% 50%), hsl(270 60% 55%))' }} />
-                                <div className={isRTL ? 'pr-4' : 'pl-4'}>
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="font-semibold text-foreground">{lesson.title}</h4>
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDateForDisplay(lesson.lesson_date)}
-                                    </span>
-                                  </div>
-                                  {lesson.description && (
-                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                      {lesson.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                    {lesson.duration && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        <Clock className="w-3 h-3 ml-1" />
-                                        {lesson.duration}
-                                      </Badge>
-                                    )}
-                                    {lesson.file_url && (
-                                      <Badge variant="outline" className="text-xs">
-                                        <FileText className="w-3 h-3 ml-1" />
-                                        {t.teacher.fileSelected}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </motion.button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
+                    {/* Lessons list */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">{t.teacher.lessonsAndSessions}</h3>
+                      {lessons.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          {t.teacher.noLessonsYet}
+                        </p>
+                      ) : filteredLessons.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          {t.teacher.noLessonsFound}
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {filteredLessons.map((lesson) => (
+                            <motion.button
+                              key={lesson.id}
+                              onClick={() => setSelectedLesson(lesson)}
+                              className="w-full p-4 rounded-lg bg-card border-2 border-border text-right hover:border-primary transition-colors"
+                              whileHover={{ scale: 1.01 }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold">{lesson.title}</h4>
+                                <span className="text-sm text-muted-foreground">
+                                  {formatDateForDisplay(lesson.lesson_date)}
+                                </span>
+                              </div>
+                              {lesson.description && (
+                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                  {lesson.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {lesson.duration && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Clock className="w-3 h-3 ml-1" />
+                                    {lesson.duration}
+                                  </Badge>
+                                )}
+                                {lesson.file_url && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <FileText className="w-3 h-3 ml-1" />
+                                    {t.teacher.fileSelected}
+                                  </Badge>
+                                )}
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
           </TabsContent>
