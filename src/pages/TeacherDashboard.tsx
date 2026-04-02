@@ -47,8 +47,10 @@ interface Lesson {
   lesson_date: string;
   file_url: string | null;
   duration?: string | null;
+  lesson_type?: string | null;
+  homework_submission_date?: string | null;
+  homework_return_date?: string | null;
 }
-
 const TeacherDashboard = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
