@@ -564,6 +564,40 @@ const TeacherDashboard = () => {
                             placeholder={t.teacher.lessonDurationPlaceholder}
                           />
                         </div>
+
+                        {/* Homework-specific fields */}
+                        {lessonType === 'homework_correction' && (
+                          <>
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
+                              </Label>
+                              <Input
+                                type="text"
+                                value={homeworkSubmissionDate}
+                                onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
+                                placeholder={t.teacher.lessonDatePlaceholder}
+                                dir="ltr"
+                                className="text-left"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
+                              </Label>
+                              <Input
+                                type="text"
+                                value={homeworkReturnDate}
+                                onChange={(e) => setHomeworkReturnDate(e.target.value)}
+                                placeholder={t.teacher.lessonDatePlaceholder}
+                                dir="ltr"
+                                className="text-left"
+                              />
+                            </div>
+                          </>
+                        )}
                         
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
