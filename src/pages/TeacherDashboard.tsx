@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TeacherSettings } from '@/components/TeacherSettings';
 import { TeacherFiles } from '@/components/TeacherFiles';
@@ -47,8 +48,10 @@ interface Lesson {
   lesson_date: string;
   file_url: string | null;
   duration?: string | null;
+  lesson_type?: string | null;
+  homework_submission_date?: string | null;
+  homework_return_date?: string | null;
 }
-
 const TeacherDashboard = () => {
   const { signOut } = useAuth();
   const { toast } = useToast();
@@ -70,6 +73,9 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
+  const [lessonType, setLessonType] = useState('lesson');
+  const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
+  const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -270,18 +276,31 @@ const TeacherDashboard = () => {
         setUploadProgress(85);
       }
 
-      // Insert lesson with duration
+      // Parse homework dates if applicable
+      let parsedHomeworkSubmission: string | null = null;
+      let parsedHomeworkReturn: string | null = null;
+      if (lessonType === 'homework_correction') {
+        if (homeworkSubmissionDate) parsedHomeworkSubmission = parseManualDate(homeworkSubmissionDate);
+        if (homeworkReturnDate) parsedHomeworkReturn = parseManualDate(homeworkReturnDate);
+      }
+
+      // Insert lesson with all fields
+      const insertData: any = {
+        teacher_id: profile.id,
+        section_id: selectedSection.section_id,
+        title: lessonTitle,
+        description: lessonDescription,
+        lesson_date: parsedDate,
+        file_url: fileUrl,
+        duration: lessonDuration || null,
+        lesson_type: lessonType,
+        homework_submission_date: parsedHomeworkSubmission,
+        homework_return_date: parsedHomeworkReturn,
+      };
+
       const { error } = await supabase
         .from('lessons')
-        .insert({
-          teacher_id: profile.id,
-          section_id: selectedSection.section_id,
-          title: lessonTitle,
-          description: lessonDescription,
-          lesson_date: parsedDate,
-          file_url: fileUrl,
-          duration: lessonDuration || null,
-        });
+        .insert(insertData);
 
       if (error) {
         // Rollback: delete uploaded file if lesson insert fails
@@ -303,6 +322,9 @@ const TeacherDashboard = () => {
       setLessonDate('');
       setLessonDuration('');
       setLessonFile(null);
+      setLessonType('lesson');
+      setHomeworkSubmissionDate('');
+      setHomeworkReturnDate('');
       setIsAddingLesson(false);
       fetchLessons();
     } catch (error: any) {
@@ -482,6 +504,27 @@ const TeacherDashboard = () => {
                         <DialogTitle>{t.teacher.addNewLesson}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+                        {/* Lesson Type Dropdown */}
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            {t.teacher.lessonType} *
+                          </Label>
+                          <Select value={lessonType} onValueChange={setLessonType}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
+                              <SelectItem value="test">{t.teacher.lessonTypeTest}</SelectItem>
+                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                              <SelectItem value="exam_correction">{t.teacher.lessonTypeExamCorrection}</SelectItem>
+                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
+                              <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <Heading1 className="w-4 h-4" />
@@ -521,6 +564,40 @@ const TeacherDashboard = () => {
                             placeholder={t.teacher.lessonDurationPlaceholder}
                           />
                         </div>
+
+                        {/* Homework-specific fields */}
+                        {lessonType === 'homework_correction' && (
+                          <>
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
+                              </Label>
+                              <Input
+                                type="text"
+                                value={homeworkSubmissionDate}
+                                onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
+                                placeholder={t.teacher.lessonDatePlaceholder}
+                                dir="ltr"
+                                className="text-left"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
+                              </Label>
+                              <Input
+                                type="text"
+                                value={homeworkReturnDate}
+                                onChange={(e) => setHomeworkReturnDate(e.target.value)}
+                                placeholder={t.teacher.lessonDatePlaceholder}
+                                dir="ltr"
+                                className="text-left"
+                              />
+                            </div>
+                          </>
+                        )}
                         
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
@@ -699,6 +776,12 @@ const TeacherDashboard = () => {
                                 </p>
                               )}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {lesson.lesson_type && lesson.lesson_type !== 'lesson' && (
+                                  <Badge variant="default" className="text-xs">
+                                    <Tag className="w-3 h-3 ml-1" />
+                                    {(t.teacher as any)[`lessonType${lesson.lesson_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`] || lesson.lesson_type}
+                                  </Badge>
+                                )}
                                 {lesson.duration && (
                                   <Badge variant="secondary" className="text-xs">
                                     <Clock className="w-3 h-3 ml-1" />

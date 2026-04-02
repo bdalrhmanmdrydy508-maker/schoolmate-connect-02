@@ -98,20 +98,83 @@ export const SubjectCard = ({ sectionSubject, teachers, index, onUpdate, onDelet
 
   const handleChangeTeacher = async (teacherId: string | null) => {
     setIsLoading(true);
+    
+    // Update section_subjects
     const { error } = await supabase
       .from('section_subjects')
       .update({ teacher_profile_id: teacherId })
       .eq('id', sectionSubject.id);
-    setIsLoading(false);
+    
     if (error) {
+      setIsLoading(false);
       toast({ title: t.common.error, description: t.subjectManagement.updateError, variant: 'destructive' });
-    } else {
-      const teacherName = teacherId ? teachers.find(t => t.id === teacherId)?.full_name : undefined;
-      toast({ title: t.common.success, description: t.subjectManagement.teacherUpdated });
-      onUpdate({ ...sectionSubject, teacher_profile_id: teacherId, teacher_name: teacherName });
-      setShowTeacherDialog(false);
-      setTeacherSearch('');
+      return;
     }
+
+    // Sync teacher_assignments table
+    try {
+      // Remove existing assignment for this section+subject combo
+      // Find subject in subjects table by name
+      const { data: subjectData } = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('name', sectionSubject.subject_name)
+        .maybeSingle();
+
+      let subjectId = subjectData?.id;
+
+      // Create subject if not exists
+      if (!subjectId) {
+        const { data: newSubject } = await supabase
+          .from('subjects')
+          .insert({ name: sectionSubject.subject_name })
+          .select('id')
+          .single();
+        subjectId = newSubject?.id;
+      }
+
+      if (subjectId) {
+        // Delete old assignments for this section+subject
+        await supabase
+          .from('teacher_assignments')
+          .delete()
+          .eq('section_id', sectionSubject.section_id)
+          .eq('subject_id', subjectId);
+
+        // Create new assignment if teacher is selected
+        if (teacherId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: adminProfile } = await supabase
+              .from('admin_profiles')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            if (adminProfile) {
+              await supabase
+                .from('teacher_assignments')
+                .insert({
+                  teacher_id: teacherId,
+                  section_id: sectionSubject.section_id,
+                  subject_id: subjectId,
+                  admin_id: adminProfile.id,
+                  status: 'accepted',
+                });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error syncing teacher_assignments:', err);
+    }
+
+    setIsLoading(false);
+    const teacherName = teacherId ? teachers.find(t => t.id === teacherId)?.full_name : undefined;
+    toast({ title: t.common.success, description: t.subjectManagement.teacherUpdated });
+    onUpdate({ ...sectionSubject, teacher_profile_id: teacherId, teacher_name: teacherName });
+    setShowTeacherDialog(false);
+    setTeacherSearch('');
   };
 
   const handleDelete = async () => {

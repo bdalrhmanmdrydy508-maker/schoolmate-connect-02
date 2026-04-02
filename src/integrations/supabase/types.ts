@@ -125,8 +125,11 @@ export type Database = {
           description: string | null
           duration: string | null
           file_url: string | null
+          homework_return_date: string | null
+          homework_submission_date: string | null
           id: string
           lesson_date: string
+          lesson_type: string | null
           section_id: string
           teacher_id: string
           title: string
@@ -136,8 +139,11 @@ export type Database = {
           description?: string | null
           duration?: string | null
           file_url?: string | null
+          homework_return_date?: string | null
+          homework_submission_date?: string | null
           id?: string
           lesson_date: string
+          lesson_type?: string | null
           section_id: string
           teacher_id: string
           title: string
@@ -147,8 +153,11 @@ export type Database = {
           description?: string | null
           duration?: string | null
           file_url?: string | null
+          homework_return_date?: string | null
+          homework_submission_date?: string | null
           id?: string
           lesson_date?: string
+          lesson_type?: string | null
           section_id?: string
           teacher_id?: string
           title?: string
