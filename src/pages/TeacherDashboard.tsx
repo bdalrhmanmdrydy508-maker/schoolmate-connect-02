@@ -504,6 +504,27 @@ const TeacherDashboard = () => {
                         <DialogTitle>{t.teacher.addNewLesson}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
+                        {/* Lesson Type Dropdown */}
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            {t.teacher.lessonType} *
+                          </Label>
+                          <Select value={lessonType} onValueChange={setLessonType}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
+                              <SelectItem value="test">{t.teacher.lessonTypeTest}</SelectItem>
+                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                              <SelectItem value="exam_correction">{t.teacher.lessonTypeExamCorrection}</SelectItem>
+                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
+                              <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <Heading1 className="w-4 h-4" />
