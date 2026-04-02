@@ -275,18 +275,31 @@ const TeacherDashboard = () => {
         setUploadProgress(85);
       }
 
-      // Insert lesson with duration
+      // Parse homework dates if applicable
+      let parsedHomeworkSubmission: string | null = null;
+      let parsedHomeworkReturn: string | null = null;
+      if (lessonType === 'homework_correction') {
+        if (homeworkSubmissionDate) parsedHomeworkSubmission = parseManualDate(homeworkSubmissionDate);
+        if (homeworkReturnDate) parsedHomeworkReturn = parseManualDate(homeworkReturnDate);
+      }
+
+      // Insert lesson with all fields
+      const insertData: any = {
+        teacher_id: profile.id,
+        section_id: selectedSection.section_id,
+        title: lessonTitle,
+        description: lessonDescription,
+        lesson_date: parsedDate,
+        file_url: fileUrl,
+        duration: lessonDuration || null,
+        lesson_type: lessonType,
+        homework_submission_date: parsedHomeworkSubmission,
+        homework_return_date: parsedHomeworkReturn,
+      };
+
       const { error } = await supabase
         .from('lessons')
-        .insert({
-          teacher_id: profile.id,
-          section_id: selectedSection.section_id,
-          title: lessonTitle,
-          description: lessonDescription,
-          lesson_date: parsedDate,
-          file_url: fileUrl,
-          duration: lessonDuration || null,
-        });
+        .insert(insertData);
 
       if (error) {
         // Rollback: delete uploaded file if lesson insert fails
@@ -308,6 +321,9 @@ const TeacherDashboard = () => {
       setLessonDate('');
       setLessonDuration('');
       setLessonFile(null);
+      setLessonType('lesson');
+      setHomeworkSubmissionDate('');
+      setHomeworkReturnDate('');
       setIsAddingLesson(false);
       fetchLessons();
     } catch (error: any) {
