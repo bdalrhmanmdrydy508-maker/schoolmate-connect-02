@@ -776,6 +776,12 @@ const TeacherDashboard = () => {
                                 </p>
                               )}
                               <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                {lesson.lesson_type && lesson.lesson_type !== 'lesson' && (
+                                  <Badge variant="default" className="text-xs">
+                                    <Tag className="w-3 h-3 ml-1" />
+                                    {(t.teacher as any)[`lessonType${lesson.lesson_type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`] || lesson.lesson_type}
+                                  </Badge>
+                                )}
                                 {lesson.duration && (
                                   <Badge variant="secondary" className="text-xs">
                                     <Clock className="w-3 h-3 ml-1" />
