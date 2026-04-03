@@ -73,7 +73,7 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
-  const [lessonType, setLessonType] = useState('lesson');
+  const [lessonType, setLessonType] = useState('assignment');
   const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
   const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
   const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -448,10 +448,8 @@ const TeacherDashboard = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
-                              <SelectItem value="test">{t.teacher.lessonTypeTest}</SelectItem>
+                              <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
                               <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              
                               <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                               <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
                             </SelectContent>
@@ -809,12 +807,29 @@ const TeacherDashboard = () => {
 
             <TabsContent value="notifications">
               <div className="space-y-6">
-                {adminNotifications.length > 0 && (
+              {adminNotifications.length > 0 && (
                   <div className="space-y-4">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                      <Bell className="w-5 h-5" />
-                      {t.notifications?.newNotifications || 'إشعارات جديدة'}
-                    </h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Bell className="w-5 h-5" />
+                        {t.notifications?.newNotifications || 'إشعارات جديدة'}
+                      </h2>
+                      {adminNotifications.some(n => !n.is_read) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const unread = adminNotifications.filter(n => !n.is_read);
+                            await Promise.all(unread.map(n => supabase.from('admin_notifications').update({ is_read: true }).eq('id', n.id)));
+                            setAdminNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+                          }}
+                          className="gap-1"
+                        >
+                          <Check className="w-4 h-4" />
+                          {t.notifications?.markAllRead || 'تعليم الكل كمقروء'}
+                        </Button>
+                      )}
+                    </div>
                     <div className="space-y-3">
                       {adminNotifications.map((notif) => (
                         <motion.div
