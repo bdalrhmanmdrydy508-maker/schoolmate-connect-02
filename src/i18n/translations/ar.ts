@@ -194,7 +194,7 @@ export const ar = {
     lessonTypeLesson: 'درس',
     lessonTypeTest: 'اختبار',
     lessonTypeTestCorrection: 'تصحيح اختبار',
-    lessonTypeExamCorrection: 'تصحيح امتحان',
+    
     lessonTypeLabWork: 'أعمال تطبيقية',
     lessonTypeHomeworkCorrection: 'تصحيح فرض',
     homeworkSubmissionDate: 'تاريخ تسليم الفرض',

@@ -508,7 +508,7 @@ const TeacherDashboard = () => {
                               <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
                               <SelectItem value="test">{t.teacher.lessonTypeTest}</SelectItem>
                               <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              <SelectItem value="exam_correction">{t.teacher.lessonTypeExamCorrection}</SelectItem>
+                              
                               <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                               <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
                             </SelectContent>
