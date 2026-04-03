@@ -408,23 +408,13 @@ const TeacherDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="sections" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-            <TabsTrigger value="sections">{t.teacher.assignedSections}</TabsTrigger>
-            <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
-            <TabsTrigger value="notifications" className="relative">
-              {t.teacher.notifications}
-              {adminNotifications.filter(n => !n.is_read).length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                  {adminNotifications.filter(n => !n.is_read).length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Sections Tab */}
-          <TabsContent value="sections">
-            {!selectedSection ? (
+        {selectedSection ? (
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
