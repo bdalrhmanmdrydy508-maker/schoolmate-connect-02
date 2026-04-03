@@ -191,6 +191,7 @@ export const ar = {
     fileTooLarge: 'حجم الملف يجب أن يكون أقل من 50 ميغابايت',
     uploadError: 'فشل رفع الملف',
     lessonType: 'نوع الحصة',
+    lessonTypeAssignment: 'فرض',
     lessonTypeLesson: 'درس',
     lessonTypeTest: 'اختبار',
     lessonTypeTestCorrection: 'تصحيح اختبار',
