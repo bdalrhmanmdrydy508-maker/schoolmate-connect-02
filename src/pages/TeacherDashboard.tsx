@@ -408,80 +408,13 @@ const TeacherDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="sections" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-            <TabsTrigger value="sections">{t.teacher.assignedSections}</TabsTrigger>
-            <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
-            <TabsTrigger value="notifications" className="relative">
-              {t.teacher.notifications}
-              {adminNotifications.filter(n => !n.is_read).length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                  {adminNotifications.filter(n => !n.is_read).length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Sections Tab */}
-          <TabsContent value="sections">
-            {!selectedSection ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
-                <h2 className="text-xl font-bold">{t.teacher.assignedSections}</h2>
-                
-                {assignments.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>{t.teacher.noSectionsAssigned}</p>
-                    <p className="text-sm">{t.teacher.waitForAssignments}</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {assignments.map((assignment, index) => (
-                      <motion.button
-                        key={assignment.id}
-                        initial={{ opacity: 0, scale: 0.9, rotateY: -20 }}
-                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05, y: -8 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedSection(assignment)}
-                        className="notebook-card group relative"
-                      >
-                        {/* Notebook binding */}
-                        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-primary/30 to-transparent rounded-r-xl" />
-                        <div className="absolute right-2 top-4 bottom-4 w-0.5 bg-primary/20" />
-                        
-                        {/* Notebook content */}
-                        <div className="relative h-full flex flex-col items-center justify-center p-4">
-                          <div className="w-14 h-18 bg-primary/10 rounded-lg mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                            <BookOpen className="w-8 h-8 text-primary" />
-                          </div>
-                          <span className="font-bold text-foreground text-lg">{(assignment as any).sections?.name}</span>
-                          <Badge variant="outline" className="mt-2">{(assignment as any).subjects?.name}</Badge>
-                          <span className="text-xs text-muted-foreground mt-1">{t.teacher.viewOnly}</span>
-                        </div>
-                        
-                        {/* Notebook lines */}
-                        <div className="absolute inset-x-8 bottom-8 space-y-2 opacity-20">
-                          <div className="h-px bg-primary/50" />
-                          <div className="h-px bg-primary/50" />
-                          <div className="h-px bg-primary/50" />
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
+        {selectedSection ? (
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
                 <div className="flex items-center justify-between">
                   <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}>
                     <ChevronRight className="w-4 h-4 ml-1" />
@@ -518,7 +451,7 @@ const TeacherDashboard = () => {
                               <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
                               <SelectItem value="test">{t.teacher.lessonTypeTest}</SelectItem>
                               <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              <SelectItem value="exam_correction">{t.teacher.lessonTypeExamCorrection}</SelectItem>
+                              
                               <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                               <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
                             </SelectContent>
@@ -802,66 +735,128 @@ const TeacherDashboard = () => {
                     </div>
                   </>
                 )}
-              </motion.div>
-            )}
-          </TabsContent>
+            </motion.div>
+          </div>
+        ) : (
+          <Tabs defaultValue="sections" className="space-y-6">
+            <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
+              <TabsTrigger value="sections">{t.teacher.assignedSections}</TabsTrigger>
+              <TabsTrigger value="files">{t.teacher.myFiles}</TabsTrigger>
+              <TabsTrigger value="notifications" className="relative">
+                {t.teacher.notifications}
+                {adminNotifications.filter(n => !n.is_read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                    {adminNotifications.filter(n => !n.is_read).length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Files Tab */}
-          <TabsContent value="files">
-            {profile && <TeacherFiles profile={profile} />}
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications">
-            <div className="space-y-6">
-              {/* Admin Notifications */}
-              {adminNotifications.length > 0 && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Bell className="w-5 h-5" />
-                    {t.notifications?.newNotifications || 'إشعارات جديدة'}
-                  </h2>
-                  <div className="space-y-3">
-                    {adminNotifications.map((notif) => (
-                      <motion.div
-                        key={notif.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
+            <TabsContent value="sections">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-6"
+              >
+                <h2 className="text-xl font-bold">{t.teacher.assignedSections}</h2>
+                
+                {assignments.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>{t.teacher.noSectionsAssigned}</p>
+                    <p className="text-sm">{t.teacher.waitForAssignments}</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {assignments.map((assignment, index) => (
+                      <motion.button
+                        key={assignment.id}
+                        initial={{ opacity: 0, scale: 0.9, rotateY: -20 }}
+                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.05, y: -8 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedSection(assignment)}
+                        className="notebook-card group relative"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{notif.subject_name}</p>
-                            <p className="mt-1">{notif.message}</p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
-                            </p>
+                        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-primary/30 to-transparent rounded-r-xl" />
+                        <div className="absolute right-2 top-4 bottom-4 w-0.5 bg-primary/20" />
+                        
+                        <div className="relative h-full flex flex-col items-center justify-center p-4">
+                          <div className="w-14 h-18 bg-primary/10 rounded-lg mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <BookOpen className="w-8 h-8 text-primary" />
                           </div>
-                          {!notif.is_read && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => markNotificationRead(notif.id)}
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                          )}
+                          <span className="font-bold text-foreground text-lg">{(assignment as any).sections?.name}</span>
+                          <Badge variant="outline" className="mt-2">{(assignment as any).subjects?.name}</Badge>
+                          <span className="text-xs text-muted-foreground mt-1">{t.teacher.viewOnly}</span>
                         </div>
-                      </motion.div>
+                        
+                        <div className="absolute inset-x-8 bottom-8 space-y-2 opacity-20">
+                          <div className="h-px bg-primary/50" />
+                          <div className="h-px bg-primary/50" />
+                          <div className="h-px bg-primary/50" />
+                        </div>
+                      </motion.button>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </motion.div>
+            </TabsContent>
 
-              {adminNotifications.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>{t.teacher.noNewAssignments}</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="files">
+              {profile && <TeacherFiles profile={profile} />}
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <div className="space-y-6">
+                {adminNotifications.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <Bell className="w-5 h-5" />
+                      {t.notifications?.newNotifications || 'إشعارات جديدة'}
+                    </h2>
+                    <div className="space-y-3">
+                      {adminNotifications.map((notif) => (
+                        <motion.div
+                          key={notif.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{notif.subject_name}</p>
+                              <p className="mt-1">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
+                              </p>
+                            </div>
+                            {!notif.is_read && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => markNotificationRead(notif.id)}
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {adminNotifications.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Bell className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>{t.teacher.noNewAssignments}</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
       </main>
     </div>
   );
