@@ -411,6 +411,7 @@ export const ar = {
     newNotifications: 'إشعارات جديدة',
     noNotifications: 'لا توجد إشعارات',
     markAsRead: 'تم القراءة',
+    markAllRead: 'تعليم الكل كمقروء',
   },
 
   // Languages
