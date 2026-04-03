@@ -735,7 +735,6 @@ const TeacherDashboard = () => {
                     </div>
                   </>
                 )}
-              </motion.div>
             </motion.div>
           </div>
         ) : (
