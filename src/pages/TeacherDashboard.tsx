@@ -415,63 +415,6 @@ const TeacherDashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6"
-              >
-                <h2 className="text-xl font-bold">{t.teacher.assignedSections}</h2>
-                
-                {assignments.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FolderOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>{t.teacher.noSectionsAssigned}</p>
-                    <p className="text-sm">{t.teacher.waitForAssignments}</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {assignments.map((assignment, index) => (
-                      <motion.button
-                        key={assignment.id}
-                        initial={{ opacity: 0, scale: 0.9, rotateY: -20 }}
-                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05, y: -8 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSelectedSection(assignment)}
-                        className="notebook-card group relative"
-                      >
-                        {/* Notebook binding */}
-                        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-primary/30 to-transparent rounded-r-xl" />
-                        <div className="absolute right-2 top-4 bottom-4 w-0.5 bg-primary/20" />
-                        
-                        {/* Notebook content */}
-                        <div className="relative h-full flex flex-col items-center justify-center p-4">
-                          <div className="w-14 h-18 bg-primary/10 rounded-lg mb-4 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                            <BookOpen className="w-8 h-8 text-primary" />
-                          </div>
-                          <span className="font-bold text-foreground text-lg">{(assignment as any).sections?.name}</span>
-                          <Badge variant="outline" className="mt-2">{(assignment as any).subjects?.name}</Badge>
-                          <span className="text-xs text-muted-foreground mt-1">{t.teacher.viewOnly}</span>
-                        </div>
-                        
-                        {/* Notebook lines */}
-                        <div className="absolute inset-x-8 bottom-8 space-y-2 opacity-20">
-                          <div className="h-px bg-primary/50" />
-                          <div className="h-px bg-primary/50" />
-                          <div className="h-px bg-primary/50" />
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
                 <div className="flex items-center justify-between">
                   <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}>
                     <ChevronRight className="w-4 h-4 ml-1" />
