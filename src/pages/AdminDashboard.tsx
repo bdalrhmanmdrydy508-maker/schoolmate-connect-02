@@ -762,7 +762,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="px-3 py-4">
         <AnimatePresence mode="wait">
           {/* Levels View */}
           {currentView === 'levels' && (
