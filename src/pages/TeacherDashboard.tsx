@@ -498,8 +498,8 @@ const TeacherDashboard = () => {
                           />
                         </div>
 
-                        {/* Homework-specific fields */}
-                        {lessonType === 'homework_correction' && (
+                        {/* Duty correction specific fields */}
+                        {lessonType === 'duty_correction' && (
                           <>
                             <div className="space-y-2">
                               <Label className="flex items-center gap-2">
