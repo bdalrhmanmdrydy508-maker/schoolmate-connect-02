@@ -279,7 +279,7 @@ const TeacherDashboard = () => {
       // Parse homework dates if applicable
       let parsedHomeworkSubmission: string | null = null;
       let parsedHomeworkReturn: string | null = null;
-      if (lessonType === 'homework_correction') {
+      if (lessonType === 'duty_correction') {
         if (homeworkSubmissionDate) parsedHomeworkSubmission = parseManualDate(homeworkSubmissionDate);
         if (homeworkReturnDate) parsedHomeworkReturn = parseManualDate(homeworkReturnDate);
       }
