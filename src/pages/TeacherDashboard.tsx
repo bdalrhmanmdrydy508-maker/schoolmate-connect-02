@@ -73,7 +73,7 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
-  const [lessonType, setLessonType] = useState('assignment');
+  const [lessonType, setLessonType] = useState('lesson');
   const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
   const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
   const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -279,7 +279,7 @@ const TeacherDashboard = () => {
       // Parse homework dates if applicable
       let parsedHomeworkSubmission: string | null = null;
       let parsedHomeworkReturn: string | null = null;
-      if (lessonType === 'homework_correction') {
+      if (lessonType === 'duty_correction') {
         if (homeworkSubmissionDate) parsedHomeworkSubmission = parseManualDate(homeworkSubmissionDate);
         if (homeworkReturnDate) parsedHomeworkReturn = parseManualDate(homeworkReturnDate);
       }
@@ -340,7 +340,7 @@ const TeacherDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
@@ -407,7 +407,7 @@ const TeacherDashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="px-3 py-4">
         {selectedSection ? (
           <div className="space-y-6">
             <motion.div
@@ -448,10 +448,12 @@ const TeacherDashboard = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
                               <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
-                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                               <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                              <SelectItem value="duty_correction">{t.teacher.lessonTypeDutyCorrection}</SelectItem>
+                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -496,8 +498,8 @@ const TeacherDashboard = () => {
                           />
                         </div>
 
-                        {/* Homework-specific fields */}
-                        {lessonType === 'homework_correction' && (
+                        {/* Duty correction specific fields */}
+                        {lessonType === 'duty_correction' && (
                           <>
                             <div className="space-y-2">
                               <Label className="flex items-center gap-2">
@@ -831,33 +833,49 @@ const TeacherDashboard = () => {
                       )}
                     </div>
                     <div className="space-y-3">
-                      {adminNotifications.map((notif) => (
-                        <motion.div
-                          key={notif.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <p className="font-semibold text-sm">{notif.subject_name}</p>
-                              <p className="mt-1">{notif.message}</p>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
-                              </p>
+                      {adminNotifications.map((notif) => {
+                        const isAssignment = notif.message.includes('تم إسنادك') || notif.message.includes('إسناد');
+                        const isReminder = notif.message.includes('تذكير') || notif.message.includes('كتابة');
+                        return (
+                          <motion.div
+                            key={notif.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`p-4 rounded-xl border-2 transition-all ${
+                              notif.is_read 
+                                ? 'bg-card border-border opacity-70' 
+                                : 'bg-card border-primary/50 shadow-md'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 flex-1">
+                                <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                  isAssignment ? 'bg-primary/15 text-primary' : isReminder ? 'bg-warning/15 text-warning' : 'bg-accent/15 text-accent'
+                                }`}>
+                                  {isAssignment ? <BookOpen className="w-4 h-4" /> : isReminder ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{notif.subject_name}</p>
+                                  <p className="mt-1 text-sm">{notif.message}</p>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
+                                  </p>
+                                </div>
+                              </div>
+                              {!notif.is_read && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => markNotificationRead(notif.id)}
+                                  className="shrink-0"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
-                            {!notif.is_read && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => markNotificationRead(notif.id)}
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

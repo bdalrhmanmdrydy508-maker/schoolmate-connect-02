@@ -660,7 +660,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="px-3 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <AnimatePresence>
@@ -762,7 +762,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="px-3 py-4">
         <AnimatePresence mode="wait">
           {/* Levels View */}
           {currentView === 'levels' && (
