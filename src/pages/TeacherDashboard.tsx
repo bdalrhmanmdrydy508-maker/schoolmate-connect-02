@@ -407,7 +407,7 @@ const TeacherDashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="px-3 py-4">
         {selectedSection ? (
           <div className="space-y-6">
             <motion.div
