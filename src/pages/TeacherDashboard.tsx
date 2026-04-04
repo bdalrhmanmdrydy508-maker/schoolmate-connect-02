@@ -73,7 +73,7 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
-  const [lessonType, setLessonType] = useState('assignment');
+  const [lessonType, setLessonType] = useState('lesson');
   const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
   const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
   const [isAddingLesson, setIsAddingLesson] = useState(false);
