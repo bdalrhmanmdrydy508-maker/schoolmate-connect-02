@@ -425,188 +425,14 @@ const TeacherDashboard = () => {
 
                 {/* Action Buttons - responsive grid, equal sizing */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Dialog open={isAddingLesson} onOpenChange={setIsAddingLesson}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="h-20 flex-col gap-2 border-2 border-border">
-                        <Upload className="w-6 h-6 text-primary" />
-                        <span className="text-xs font-medium">{t.teacher.addLesson}</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-lg">
-                      <DialogHeader>
-                        <DialogTitle>{t.teacher.addNewLesson}</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-                        {/* Lesson Type Dropdown */}
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Tag className="w-4 h-4" />
-                            {t.teacher.lessonType} *
-                          </Label>
-                          <Select value={lessonType} onValueChange={setLessonType}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
-                              <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
-                              <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
-                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              <SelectItem value="duty_correction">{t.teacher.lessonTypeDutyCorrection}</SelectItem>
-                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Heading1 className="w-4 h-4" />
-                            {t.teacher.lessonTitle} *
-                          </Label>
-                          <Input
-                            value={lessonTitle}
-                            onChange={(e) => setLessonTitle(e.target.value)}
-                            placeholder={t.teacher.lessonTitleExample}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            {t.teacher.lessonDate} * ({t.teacher.lessonDateFormat})
-                          </Label>
-                          <Input
-                            type="text"
-                            value={lessonDate}
-                            onChange={(e) => setLessonDate(e.target.value)}
-                            placeholder={t.teacher.lessonDatePlaceholder}
-                            dir="ltr"
-                            className="text-left"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            {t.teacher.lessonDuration}
-                          </Label>
-                          <Input
-                            type="text"
-                            value={lessonDuration}
-                            onChange={(e) => setLessonDuration(e.target.value)}
-                            placeholder={t.teacher.lessonDurationPlaceholder}
-                          />
-                        </div>
-
-                        {/* Duty correction specific fields */}
-                        {lessonType === 'duty_correction' && (
-                          <>
-                            <div className="space-y-2">
-                              <Label className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
-                              </Label>
-                              <Input
-                                type="text"
-                                value={homeworkSubmissionDate}
-                                onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
-                                placeholder={t.teacher.lessonDatePlaceholder}
-                                dir="ltr"
-                                className="text-left"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
-                              </Label>
-                              <Input
-                                type="text"
-                                value={homeworkReturnDate}
-                                onChange={(e) => setHomeworkReturnDate(e.target.value)}
-                                placeholder={t.teacher.lessonDatePlaceholder}
-                                dir="ltr"
-                                className="text-left"
-                              />
-                            </div>
-                          </>
-                        )}
-                        
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <List className="w-4 h-4" />
-                            {t.teacher.lessonDescription}
-                          </Label>
-                          <Textarea
-                            value={lessonDescription}
-                            onChange={(e) => setLessonDescription(e.target.value)}
-                            placeholder={t.teacher.lessonDescriptionPlaceholder}
-                            className="min-h-[200px] resize-y"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <FileUp className="w-4 h-4" />
-                            {t.teacher.attachFile}
-                          </Label>
-                          <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
-                              onChange={handleFileChange}
-                              className="hidden"
-                              id="lesson-file"
-                            />
-                            <label 
-                              htmlFor="lesson-file" 
-                              className="cursor-pointer flex flex-col items-center gap-2"
-                            >
-                              <FileUp className="w-8 h-8 text-muted-foreground" />
-                              {lessonFile ? (
-                                <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
-                              )}
-                            </label>
-                          </div>
-                          {lessonFile && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setLessonFile(null)}
-                              className="text-destructive"
-                            >
-                              {t.common.delete}
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {isUploading && (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">{t.teacher.addingLesson}</span>
-                              <span className="font-medium">{uploadProgress}%</span>
-                            </div>
-                            <Progress value={uploadProgress} className="h-2" />
-                          </div>
-                        )}
-                        
-                        <Button 
-                          onClick={handleAddLesson} 
-                          className="w-full gradient-primary"
-                          disabled={isUploading || !lessonTitle || !lessonDate}
-                        >
-                          {isUploading ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>{t.teacher.addingLesson}</span>
-                            </div>
-                          ) : t.teacher.addLesson}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col gap-2 border-2 border-border"
+                    onClick={() => setIsAddingLesson(true)}
+                  >
+                    <Upload className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-medium">{t.teacher.addLesson}</span>
+                  </Button>
 
                   <Button 
                     variant="outline" 
@@ -635,6 +461,183 @@ const TeacherDashboard = () => {
                     <span className="text-xs font-medium">{t.program.title}</span>
                   </Button>
                 </div>
+
+                {/* Full-page Add Lesson Form */}
+                {isAddingLesson && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold">{t.teacher.addNewLesson}</h3>
+                      <Button variant="ghost" size="sm" onClick={() => setIsAddingLesson(false)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Lesson Type */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Tag className="w-4 h-4" />
+                          {t.teacher.lessonType} *
+                        </Label>
+                        <Select value={lessonType} onValueChange={setLessonType}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
+                            <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
+                            <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                            <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                            <SelectItem value="duty_correction">{t.teacher.lessonTypeDutyCorrection}</SelectItem>
+                            <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Title */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Heading1 className="w-4 h-4" />
+                          {t.teacher.lessonTitle} *
+                        </Label>
+                        <Input
+                          value={lessonTitle}
+                          onChange={(e) => setLessonTitle(e.target.value)}
+                        />
+                      </div>
+
+                      {/* Date */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {t.teacher.lessonDate} * ({t.teacher.lessonDateFormat})
+                        </Label>
+                        <Input
+                          type="text"
+                          value={lessonDate}
+                          onChange={(e) => setLessonDate(e.target.value)}
+                          dir="ltr"
+                          className="text-left"
+                        />
+                      </div>
+
+                      {/* Duration */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {t.teacher.lessonDuration}
+                        </Label>
+                        <Input
+                          type="text"
+                          value={lessonDuration}
+                          onChange={(e) => setLessonDuration(e.target.value)}
+                        />
+                      </div>
+
+                      {/* Duty correction fields */}
+                      {lessonType === 'duty_correction' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
+                            </Label>
+                            <Input
+                              type="text"
+                              value={homeworkSubmissionDate}
+                              onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
+                              dir="ltr"
+                              className="text-left"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
+                            </Label>
+                            <Input
+                              type="text"
+                              value={homeworkReturnDate}
+                              onChange={(e) => setHomeworkReturnDate(e.target.value)}
+                              dir="ltr"
+                              className="text-left"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Description */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <List className="w-4 h-4" />
+                          {t.teacher.lessonDescription}
+                        </Label>
+                        <Textarea
+                          value={lessonDescription}
+                          onChange={(e) => setLessonDescription(e.target.value)}
+                          className="min-h-[150px] resize-y"
+                        />
+                      </div>
+
+                      {/* File Upload */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <FileUp className="w-4 h-4" />
+                          {t.teacher.attachFile}
+                        </Label>
+                        <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="lesson-file"
+                          />
+                          <label htmlFor="lesson-file" className="cursor-pointer flex flex-col items-center gap-2">
+                            <FileUp className="w-8 h-8 text-muted-foreground" />
+                            {lessonFile ? (
+                              <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
+                            )}
+                          </label>
+                        </div>
+                        {lessonFile && (
+                          <Button variant="ghost" size="sm" onClick={() => setLessonFile(null)} className="text-destructive">
+                            {t.common.delete}
+                          </Button>
+                        )}
+                      </div>
+
+                      {isUploading && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">{t.teacher.addingLesson}</span>
+                            <span className="font-medium">{uploadProgress}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-2" />
+                        </div>
+                      )}
+
+                      <Button
+                        onClick={handleAddLesson}
+                        className="w-full gradient-primary"
+                        disabled={isUploading || !lessonTitle || !lessonDate}
+                      >
+                        {isUploading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>{t.teacher.addingLesson}</span>
+                          </div>
+                        ) : t.teacher.addLesson}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* Conditional Views */}
                 {activeView === 'timetable' && (
