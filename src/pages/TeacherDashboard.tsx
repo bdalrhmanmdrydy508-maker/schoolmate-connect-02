@@ -448,10 +448,12 @@ const TeacherDashboard = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
                               <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
-                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
-                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                               <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                              <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                              <SelectItem value="duty_correction">{t.teacher.lessonTypeDutyCorrection}</SelectItem>
+                              <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
