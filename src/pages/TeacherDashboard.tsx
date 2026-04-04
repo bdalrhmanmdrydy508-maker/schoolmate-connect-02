@@ -833,33 +833,49 @@ const TeacherDashboard = () => {
                       )}
                     </div>
                     <div className="space-y-3">
-                      {adminNotifications.map((notif) => (
-                        <motion.div
-                          key={notif.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`p-4 rounded-xl bg-card border-2 ${notif.is_read ? 'border-border' : 'border-primary/50'}`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <p className="font-semibold text-sm">{notif.subject_name}</p>
-                              <p className="mt-1">{notif.message}</p>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
-                              </p>
+                      {adminNotifications.map((notif) => {
+                        const isAssignment = notif.message.includes('تم إسنادك') || notif.message.includes('إسناد');
+                        const isReminder = notif.message.includes('تذكير') || notif.message.includes('كتابة');
+                        return (
+                          <motion.div
+                            key={notif.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`p-4 rounded-xl border-2 transition-all ${
+                              notif.is_read 
+                                ? 'bg-card border-border opacity-70' 
+                                : 'bg-card border-primary/50 shadow-md'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 flex-1">
+                                <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                                  isAssignment ? 'bg-primary/15 text-primary' : isReminder ? 'bg-warning/15 text-warning' : 'bg-accent/15 text-accent'
+                                }`}>
+                                  {isAssignment ? <BookOpen className="w-4 h-4" /> : isReminder ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{notif.subject_name}</p>
+                                  <p className="mt-1 text-sm">{notif.message}</p>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
+                                  </p>
+                                </div>
+                              </div>
+                              {!notif.is_read && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => markNotificationRead(notif.id)}
+                                  className="shrink-0"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
-                            {!notif.is_read && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => markNotificationRead(notif.id)}
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
