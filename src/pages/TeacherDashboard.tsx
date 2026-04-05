@@ -694,8 +694,12 @@ const TeacherDashboard = () => {
               className="space-y-6"
             >
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}>
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
+                    className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 text-base font-semibold px-3 py-2 h-auto"
+                  >
+                    <ArrowRight className="w-6 h-6" />
                     {t.teacher.backToSections}
                   </Button>
                   <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
