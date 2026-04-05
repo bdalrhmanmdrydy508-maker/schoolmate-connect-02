@@ -177,6 +177,26 @@ const TeacherDashboard = () => {
     if (data) setLessons(data);
   };
 
+  const fetchProgramLessons = async () => {
+    if (!selectedSection || !profile) return;
+    const { data } = await supabase
+      .from('teacher_programs')
+      .select('lesson_title, unit')
+      .eq('section_id', selectedSection.section_id)
+      .eq('teacher_id', profile.id)
+      .order('lesson_number', { ascending: true });
+    if (data) setProgramLessons(data);
+  };
+
+  // Filter suggestions based on typing
+  const titleSuggestions = useMemo(() => {
+    if (!lessonTitle.trim() || !showSuggestions) return [];
+    const query = lessonTitle.toLowerCase();
+    return programLessons
+      .filter(p => p.lesson_title.toLowerCase().includes(query))
+      .slice(0, 6);
+  }, [lessonTitle, programLessons, showSuggestions]);
+
   // Filter lessons based on search query
   const filteredLessons = lessons.filter(lesson =>
     lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
