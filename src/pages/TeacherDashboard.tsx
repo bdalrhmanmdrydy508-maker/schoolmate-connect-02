@@ -359,6 +359,261 @@ const TeacherDashboard = () => {
     }
   };
 
+  // Full-screen Add Lesson Page
+  if (isAddingLesson && selectedSection) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Minimal Header */}
+        <header className="sticky top-0 z-50 glass border-b border-border/50">
+          <div className="px-3 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-foreground">{profile?.full_name}</h1>
+                  <span className="text-xs text-muted-foreground">{(selectedSection as any).subjects?.name}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+                  <Settings className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={signOut}>
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="px-4 py-5 max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              onClick={() => setIsAddingLesson(false)}
+              className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 text-base font-semibold px-3 py-2 h-auto"
+            >
+              <ArrowRight className="w-6 h-6" />
+              {t.common.back}
+            </Button>
+
+            <h2 className="text-2xl font-bold">{t.teacher.addNewLesson}</h2>
+
+            <div className="space-y-5">
+              {/* Lesson Type */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Tag className="w-5 h-5" />
+                  {t.teacher.lessonType} *
+                </Label>
+                <Select value={lessonType} onValueChange={(v) => { setLessonType(v); setHomeworkSubmissionDate(''); setHomeworkReturnDate(''); }}>
+                  <SelectTrigger className="h-12 text-base rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lesson">{t.teacher.lessonTypeLesson}</SelectItem>
+                    <SelectItem value="assignment">{t.teacher.lessonTypeAssignment}</SelectItem>
+                    <SelectItem value="homework_correction">{t.teacher.lessonTypeHomeworkCorrection}</SelectItem>
+                    <SelectItem value="test_correction">{t.teacher.lessonTypeTestCorrection}</SelectItem>
+                    <SelectItem value="duty_correction">{t.teacher.lessonTypeDutyCorrection}</SelectItem>
+                    <SelectItem value="lab_work">{t.teacher.lessonTypeLabWork}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Title with AI Autocomplete */}
+              <div className="space-y-2 relative">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Heading1 className="w-5 h-5" />
+                  {t.teacher.lessonTitle} *
+                </Label>
+                <Input
+                  value={lessonTitle}
+                  onChange={(e) => { setLessonTitle(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="h-12 text-base rounded-xl"
+                />
+                {/* AI Suggestions Dropdown */}
+                <AnimatePresence>
+                  {titleSuggestions.length > 0 && showSuggestions && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border-2 border-primary/30 rounded-xl shadow-lg overflow-hidden"
+                    >
+                      {titleSuggestions.map((s, i) => (
+                        <button
+                          key={i}
+                          onMouseDown={(e) => { e.preventDefault(); setLessonTitle(s.lesson_title); setShowSuggestions(false); }}
+                          className="w-full px-4 py-3 text-right hover:bg-primary/10 transition-colors border-b border-border/50 last:border-0 flex items-center justify-between"
+                        >
+                          <span className="font-medium text-foreground">{s.lesson_title}</span>
+                          {s.unit && <Badge variant="secondary" className="text-xs">{s.unit}</Badge>}
+                        </button>
+                      ))}
+                      <div className="px-4 py-2 bg-muted/50 text-xs text-muted-foreground flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" />
+                        اقتراحات من برنامجك
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Date */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Calendar className="w-5 h-5" />
+                  {t.teacher.lessonDate} * ({t.teacher.lessonDateFormat})
+                </Label>
+                <Input
+                  type="text"
+                  value={lessonDate}
+                  onChange={(e) => setLessonDate(e.target.value)}
+                  dir="ltr"
+                  className="h-12 text-base rounded-xl text-left"
+                />
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <Clock className="w-5 h-5" />
+                  {t.teacher.lessonDuration}
+                </Label>
+                <Input
+                  type="text"
+                  value={lessonDuration}
+                  onChange={(e) => setLessonDuration(e.target.value)}
+                  className="h-12 text-base rounded-xl"
+                />
+              </div>
+
+              {/* Duty correction fields */}
+              {lessonType === 'duty_correction' && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
+                      <Calendar className="w-5 h-5" />
+                      {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
+                    </Label>
+                    <Input
+                      type="text"
+                      value={homeworkSubmissionDate}
+                      onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
+                      dir="ltr"
+                      className="h-12 text-base rounded-xl text-left"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
+                      <Calendar className="w-5 h-5" />
+                      {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
+                    </Label>
+                    <Input
+                      type="text"
+                      value={homeworkReturnDate}
+                      onChange={(e) => setHomeworkReturnDate(e.target.value)}
+                      dir="ltr"
+                      className="h-12 text-base rounded-xl text-left"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <List className="w-5 h-5" />
+                  {t.teacher.lessonDescription}
+                </Label>
+                <Textarea
+                  value={lessonDescription}
+                  onChange={(e) => setLessonDescription(e.target.value)}
+                  className="min-h-[150px] resize-y text-base rounded-xl"
+                />
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <FileUp className="w-5 h-5" />
+                  {t.teacher.attachFile}
+                </Label>
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="lesson-file"
+                  />
+                  <label htmlFor="lesson-file" className="cursor-pointer flex flex-col items-center gap-2">
+                    <FileUp className="w-10 h-10 text-muted-foreground" />
+                    {lessonFile ? (
+                      <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
+                    )}
+                  </label>
+                </div>
+                {lessonFile && (
+                  <Button variant="ghost" size="sm" onClick={() => setLessonFile(null)} className="text-destructive">
+                    {t.common.delete}
+                  </Button>
+                )}
+              </div>
+
+              {isUploading && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{t.teacher.addingLesson}</span>
+                    <span className="font-medium">{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-2" />
+                </div>
+              )}
+
+              <Button
+                onClick={handleAddLesson}
+                className="w-full gradient-primary h-12 text-base font-semibold rounded-xl"
+                disabled={isUploading || !lessonTitle || !lessonDate}
+              >
+                {isUploading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{t.teacher.addingLesson}</span>
+                  </div>
+                ) : t.teacher.addLesson}
+              </Button>
+            </div>
+          </motion.div>
+        </main>
+
+        {/* Settings Modal */}
+        <AnimatePresence>
+          {showSettings && profile && (
+            <TeacherSettings
+              profile={profile}
+              onClose={() => setShowSettings(false)}
+              onThemeChange={handleThemeChange}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
