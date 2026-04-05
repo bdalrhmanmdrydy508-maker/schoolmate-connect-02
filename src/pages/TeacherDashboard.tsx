@@ -436,22 +436,19 @@ const TeacherDashboard = () => {
                   <Heading1 className="w-5 h-5" />
                   {t.teacher.lessonTitle} *
                 </Label>
-                <Input
-                  value={lessonTitle}
-                  onChange={(e) => { setLessonTitle(e.target.value); setShowSuggestions(true); }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="h-12 text-base rounded-xl"
-                />
-                {/* AI Suggestions Dropdown */}
+                {/* AI Suggestions - Above Input */}
                 <AnimatePresence>
                   {titleSuggestions.length > 0 && showSuggestions && (
                     <motion.div
-                      initial={{ opacity: 0, y: -5 }}
+                      initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border-2 border-primary/30 rounded-xl shadow-lg overflow-hidden"
+                      exit={{ opacity: 0, y: 5 }}
+                      className="z-50 bg-popover border-2 border-primary/30 rounded-xl shadow-lg overflow-hidden mb-1"
                     >
+                      <div className="px-4 py-2 bg-muted/50 text-xs text-muted-foreground flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" />
+                        اقتراحات من برنامجك
+                      </div>
                       {titleSuggestions.map((s, i) => (
                         <button
                           key={i}
@@ -462,28 +459,25 @@ const TeacherDashboard = () => {
                           {s.unit && <Badge variant="secondary" className="text-xs">{s.unit}</Badge>}
                         </button>
                       ))}
-                      <div className="px-4 py-2 bg-muted/50 text-xs text-muted-foreground flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        اقتراحات من برنامجك
-                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
+                <Input
+                  value={lessonTitle}
+                  onChange={(e) => { setLessonTitle(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="h-12 text-base rounded-xl"
+                />
               </div>
 
               {/* Date */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base font-semibold">
                   <Calendar className="w-5 h-5" />
-                  {t.teacher.lessonDate} * ({t.teacher.lessonDateFormat})
+                  {t.teacher.lessonDate} *
                 </Label>
-                <Input
-                  type="text"
-                  value={lessonDate}
-                  onChange={(e) => setLessonDate(e.target.value)}
-                  dir="ltr"
-                  className="h-12 text-base rounded-xl text-left"
-                />
+                <ScrollDatePicker value={lessonDate} onChange={setLessonDate} />
               </div>
 
               {/* Duration */}
@@ -506,28 +500,16 @@ const TeacherDashboard = () => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-base font-semibold">
                       <Calendar className="w-5 h-5" />
-                      {t.teacher.homeworkSubmissionDate} ({t.teacher.lessonDateFormat})
+                      {t.teacher.homeworkSubmissionDate}
                     </Label>
-                    <Input
-                      type="text"
-                      value={homeworkSubmissionDate}
-                      onChange={(e) => setHomeworkSubmissionDate(e.target.value)}
-                      dir="ltr"
-                      className="h-12 text-base rounded-xl text-left"
-                    />
+                    <ScrollDatePicker value={homeworkSubmissionDate} onChange={setHomeworkSubmissionDate} />
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2 text-base font-semibold">
                       <Calendar className="w-5 h-5" />
-                      {t.teacher.homeworkReturnDate} ({t.teacher.lessonDateFormat})
+                      {t.teacher.homeworkReturnDate}
                     </Label>
-                    <Input
-                      type="text"
-                      value={homeworkReturnDate}
-                      onChange={(e) => setHomeworkReturnDate(e.target.value)}
-                      dir="ltr"
-                      className="h-12 text-base rounded-xl text-left"
-                    />
+                    <ScrollDatePicker value={homeworkReturnDate} onChange={setHomeworkReturnDate} />
                   </div>
                 </>
               )}
@@ -924,7 +906,7 @@ const TeacherDashboard = () => {
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold flex items-center gap-2">
                         <Bell className="w-5 h-5" />
-                        {t.notifications?.newNotifications || 'إشعارات جديدة'}
+                        الإشعارات
                       </h2>
                       {adminNotifications.some(n => !n.is_read) && (
                         <Button
@@ -938,50 +920,86 @@ const TeacherDashboard = () => {
                           className="gap-1"
                         >
                           <Check className="w-4 h-4" />
-                          {t.notifications?.markAllRead || 'تعليم الكل كمقروء'}
+                          تعليم الكل كمقروء
                         </Button>
                       )}
                     </div>
                     <div className="space-y-3">
                       {adminNotifications.map((notif) => {
                         const isAssignment = notif.message.includes('تم إسنادك') || notif.message.includes('إسناد');
+                        const isAlert = notif.message.includes('تنبيه') || notif.message.includes('المدير');
                         const isReminder = notif.message.includes('تذكير') || notif.message.includes('كتابة');
+                        
+                        // Parse notification for structured display
+                        const sectionMatch = notif.message.match(/القسم:\s*([^–\-:]+)/);
+                        const messageMatch = notif.message.match(/الرسالة:\s*(.+)$/);
+                        const sectionName = sectionMatch ? sectionMatch[1].trim() : '';
+                        const messageText = messageMatch ? messageMatch[1].trim() : notif.message;
+
                         return (
                           <motion.div
                             key={notif.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`p-4 rounded-xl border-2 transition-all ${
+                            className={`rounded-xl border-2 overflow-hidden transition-all ${
                               notif.is_read 
-                                ? 'bg-card border-border opacity-70' 
-                                : 'bg-card border-primary/50 shadow-md'
+                                ? 'bg-card border-border opacity-75' 
+                                : isAlert 
+                                  ? 'bg-card border-warning/50 shadow-md'
+                                  : isAssignment
+                                    ? 'bg-card border-primary/50 shadow-md'
+                                    : 'bg-card border-accent/50 shadow-md'
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-3 flex-1">
-                                <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                                  isAssignment ? 'bg-primary/15 text-primary' : isReminder ? 'bg-warning/15 text-warning' : 'bg-accent/15 text-accent'
+                            {/* Notification Header */}
+                            <div className={`px-4 py-2 flex items-center justify-between ${
+                              isAlert ? 'bg-warning/10' : isAssignment ? 'bg-primary/10' : 'bg-accent/10'
+                            }`}>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                                  isAlert ? 'bg-warning/20 text-warning' : isAssignment ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent'
                                 }`}>
-                                  {isAssignment ? <BookOpen className="w-4 h-4" /> : isReminder ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                  {isAlert ? <AlertTriangle className="w-4 h-4" /> : isAssignment ? <BookOpen className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
                                 </div>
-                                <div className="flex-1">
-                                  <p className="font-semibold text-sm">{notif.subject_name}</p>
-                                  <p className="mt-1 text-sm">{notif.message}</p>
-                                  <p className="text-xs text-muted-foreground mt-2">
-                                    {new Date(notif.created_at).toLocaleDateString('ar-DZ')}
-                                  </p>
-                                </div>
+                                <span className={`font-bold text-sm ${
+                                  isAlert ? 'text-warning' : isAssignment ? 'text-primary' : 'text-accent'
+                                }`}>
+                                  {isAlert ? 'تنبيه من المدير' : isAssignment ? 'إسناد قسم' : 'إشعار'}
+                                </span>
                               </div>
                               {!notif.is_read && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => markNotificationRead(notif.id)}
-                                  className="shrink-0"
+                                  className="h-7 w-7 p-0 shrink-0"
                                 >
                                   <Check className="w-4 h-4" />
                                 </Button>
                               )}
+                            </div>
+                            {/* Notification Body */}
+                            <div className="px-4 py-3 space-y-2">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                                {sectionName && (
+                                  <span className="flex items-center gap-1">
+                                    <span className="text-muted-foreground">القسم:</span>
+                                    <span className="font-semibold text-foreground">{sectionName}</span>
+                                  </span>
+                                )}
+                                {notif.subject_name && (
+                                  <span className="flex items-center gap-1">
+                                    <span className="text-muted-foreground">المادة:</span>
+                                    <span className="font-semibold text-foreground">{notif.subject_name}</span>
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-foreground leading-relaxed">
+                                {isAlert && messageText !== notif.message ? messageText : notif.message}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(notif.created_at).toLocaleDateString('ar-DZ', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </p>
                             </div>
                           </motion.div>
                         );
