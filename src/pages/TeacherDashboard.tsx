@@ -94,8 +94,9 @@ const TeacherDashboard = () => {
   }, [profile]);
 
   useEffect(() => {
-    if (selectedSection) {
+    if (selectedSection && profile) {
       fetchLessons();
+      fetchProgramLessons();
     }
   }, [selectedSection]);
 
