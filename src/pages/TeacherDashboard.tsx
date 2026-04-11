@@ -929,7 +929,7 @@ const TeacherDashboard = () => {
                     <div className="space-y-3">
                       {adminNotifications.map((notif) => {
                         const isAssignment = notif.message.includes('تم إسنادك') || notif.message.includes('إسناد');
-                        const isAlert = notif.message.includes('تنبيه') || notif.message.includes('المدير') || notif.message.includes('مدير المؤسسة');
+                        const isAlert = notif.message.includes('تنبيه') || notif.message.includes('الناظر');
                         const isReminder = notif.message.includes('تذكير') || notif.message.includes('كتابة');
                         
                         // Parse notification for structured display
@@ -966,7 +966,7 @@ const TeacherDashboard = () => {
                                 <span className={`font-bold text-sm ${
                                   isAlert ? 'text-warning' : isAssignment ? 'text-primary' : 'text-accent'
                                 }`}>
-                                  {isAlert ? 'تنبيه من مدير المؤسسة' : isAssignment ? 'إسناد قسم' : 'إشعار'}
+                                  {isAlert ? 'تنبيه من الناظر' : isAssignment ? 'إسناد قسم' : 'إشعار'}
                                 </span>
                               </div>
                               {!notif.is_read && (
