@@ -62,7 +62,7 @@ export const en = {
 
   // Roles
   roles: {
-    admin: 'Admin',
+    admin: 'Principal',
     teacher: 'Teacher',
     aboutToStartAs: 'You are about to start as...',
     adminDescription: 'Manage the educational institution, sections, subjects, and assign teachers',

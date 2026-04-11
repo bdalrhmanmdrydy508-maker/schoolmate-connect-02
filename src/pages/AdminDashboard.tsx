@@ -560,7 +560,7 @@ const AdminDashboard = () => {
         teacher_profile_id: notificationSubject.teacher_profile_id,
         section_id: selectedSection.id,
         subject_name: notificationSubject.subject_name,
-        message: `تنبيه من مدير المؤسسة – القسم: ${selectedSection.name}: ${notificationMessage.trim()}`,
+        message: `تنبيه من الناظر – القسم: ${selectedSection.name}: ${notificationMessage.trim()}`,
       });
     setIsLoading(false);
     if (error) {
