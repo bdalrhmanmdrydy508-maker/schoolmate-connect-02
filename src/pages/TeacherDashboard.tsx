@@ -396,13 +396,14 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Back Button */}
+            {/* Back Button - Neon Cyan */}
             <Button
               variant="ghost"
               onClick={() => setIsAddingLesson(false)}
-              className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 text-base font-semibold px-3 py-2 h-auto"
+              className="gap-2 text-lg font-bold px-4 py-3 h-auto rounded-xl"
+              style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.08)' }}
             >
-              <ArrowRight className="w-6 h-6" />
+              <ArrowRight className="w-7 h-7" />
               {t.common.back}
             </Button>
 
@@ -680,9 +681,10 @@ const TeacherDashboard = () => {
                   <Button
                     variant="ghost"
                     onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
-                    className="text-primary hover:text-primary/80 hover:bg-primary/10 gap-2 text-base font-semibold px-3 py-2 h-auto"
+                    className="gap-2 text-lg font-bold px-4 py-3 h-auto rounded-xl"
+                    style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.08)' }}
                   >
-                    <ArrowRight className="w-6 h-6" />
+                    <ArrowRight className="w-7 h-7" />
                     {t.teacher.backToSections}
                   </Button>
                   <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
