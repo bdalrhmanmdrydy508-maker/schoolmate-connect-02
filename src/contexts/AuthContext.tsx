@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { 
           success: false, 
           error: isAdmin 
-            ? 'فشل تسجيل دخول المدير - بيانات الاعتماد غير صحيحة'
+            ? 'فشل تسجيل دخول مدير المؤسسة - بيانات الاعتماد غير صحيحة'
             : 'فشل تسجيل دخول الأستاذ - بيانات الاعتماد غير صحيحة'
         };
       }
@@ -96,8 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { 
           success: false, 
           error: isAdmin 
-            ? 'فشل تسجيل دخول المدير - هذا الحساب مسجل كأستاذ'
-            : 'فشل تسجيل دخول الأستاذ - هذا الحساب مسجل كمدير',
+            ? 'فشل تسجيل دخول مدير المؤسسة - هذا الحساب مسجل كأستاذ'
+            : 'فشل تسجيل دخول الأستاذ - هذا الحساب مسجل كمدير مؤسسة',
           actualRole 
         };
       }
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await supabase.auth.signOut();
           return {
             success: false,
-            error: 'حسابك قيد المراجعة. يرجى انتظار موافقة المدير.'
+            error: 'حسابك قيد المراجعة. يرجى انتظار موافقة مدير المؤسسة.'
           };
         }
 
@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await supabase.auth.signOut();
           return {
             success: false,
-            error: 'تم رفض طلب التسجيل. يرجى التواصل مع المدير.'
+            error: 'تم رفض طلب التسجيل. يرجى التواصل مع مدير المؤسسة.'
           };
         }
       }
