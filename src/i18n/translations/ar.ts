@@ -41,7 +41,7 @@ export const ar = {
     confirmPassword: 'تأكيد كلمة السر',
     fullName: 'الاسم الكامل',
     secretCode: 'الرمز السري',
-    secretCodeRequired: 'الرمز السري مطلوب للوصول إلى واجهة المدير',
+    secretCodeRequired: 'الرمز السري مطلوب فقط عند إنشاء حساب مدير المؤسسة',
     invalidSecretCode: 'الرمز السري غير صحيح',
     welcomeBack: 'مرحباً بعودتك',
     joinUs: 'انضم إلينا كـ',
@@ -54,15 +54,15 @@ export const ar = {
     accountError: 'خطأ في إنشاء الحساب',
     emailAlreadyRegistered: 'البريد الإلكتروني مسجل مسبقاً - جرب تسجيل الدخول بدلاً من ذلك',
     registrationSent: 'تم إرسال طلب التسجيل',
-    waitingApproval: 'طلب التسجيل قيد المراجعة. يرجى انتظار موافقة المدير.',
+    waitingApproval: 'طلب التسجيل قيد المراجعة. يرجى انتظار موافقة مدير المؤسسة.',
     ensureCorrectRole: 'تأكد من اختيار الدور الصحيح أو استخدم حساباً آخر',
-    adminLoginFailed: 'فشل تسجيل دخول المدير',
+    adminLoginFailed: 'فشل تسجيل دخول مدير المؤسسة',
     teacherLoginFailed: 'فشل تسجيل دخول الأستاذ',
   },
 
   // Roles
   roles: {
-    admin: 'المدير',
+    admin: 'مدير المؤسسة',
     teacher: 'الأستاذ',
     aboutToStartAs: 'أنت على وشك البدء كـ...',
     adminDescription: 'إدارة المؤسسة التعليمية والأقسام والمواد وإسناد الأساتذة',

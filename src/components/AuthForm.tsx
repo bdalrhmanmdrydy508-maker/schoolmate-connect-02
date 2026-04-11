@@ -72,7 +72,6 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   const adminLoginSchema = z.object({
     email: z.string().email(t.auth.email + ' invalid'),
     password: z.string().min(1, t.auth.password + ' required'),
-    secretCode: z.string().refine(val => val === ADMIN_SECRET_CODE, t.auth.invalidSecretCode),
   });
 
   const teacherLoginSchema = z.object({
@@ -355,8 +354,8 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
             {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
           </div>
 
-          {/* Secret Code Field - Required for Admin */}
-          {role === 'admin' && (
+        {/* Secret Code Field - Required for Admin signup only */}
+        {role === 'admin' && !isLogin && (
             <div className="space-y-2">
               <Label htmlFor="secretCode" className="text-foreground">{t.auth.secretCode}</Label>
               <div className="relative">
