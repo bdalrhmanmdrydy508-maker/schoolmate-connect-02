@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { 
           success: false, 
           error: isAdmin 
-            ? 'فشل تسجيل دخول مدير المؤسسة - بيانات الاعتماد غير صحيحة'
+            ? 'فشل تسجيل دخول الناظر - بيانات الاعتماد غير صحيحة'
             : 'فشل تسجيل دخول الأستاذ - بيانات الاعتماد غير صحيحة'
         };
       }
