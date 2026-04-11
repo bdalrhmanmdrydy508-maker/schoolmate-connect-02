@@ -134,7 +134,7 @@ export const ar = {
     teacherAssigned: 'أستاذ مُسند',
     assignmentSent: 'تم إرسال طلب الإسناد للأستاذ',
     alreadyAssigned: 'تم إسناد أستاذ لهذه المادة مسبقاً',
-    adminProfileNotFound: 'لم يتم العثور على ملف المدير',
+    adminProfileNotFound: 'لم يتم العثور على ملف مدير المؤسسة',
     selectTeacher: 'يرجى اختيار الأستاذ',
     pending: 'في الانتظار',
     accepted: 'مقبول',
@@ -164,7 +164,7 @@ export const ar = {
   teacher: {
     assignedSections: 'الأقسام المسندة',
     noSectionsAssigned: 'لا توجد أقسام مسندة بعد',
-    waitForAssignments: 'انتظر طلبات الإسناد من المدير',
+    waitForAssignments: 'انتظر طلبات الإسناد من مدير المؤسسة',
     myFiles: 'ملفاتي',
     notifications: 'الإشعارات',
     backToSections: 'العودة للأقسام',
