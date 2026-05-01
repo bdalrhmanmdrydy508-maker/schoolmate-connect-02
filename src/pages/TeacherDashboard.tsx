@@ -22,6 +22,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
 import { MyProgram } from '@/components/MyProgram';
+import { BackButton } from '@/components/BackButton';
 
 
 interface TeacherProfile {
