@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send, Menu } from 'lucide-react';
+import { SideMenu } from '@/components/SideMenu';
+import { AcademicArchive } from '@/components/AcademicArchive';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
