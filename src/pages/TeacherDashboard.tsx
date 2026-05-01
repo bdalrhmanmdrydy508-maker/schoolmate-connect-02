@@ -396,16 +396,8 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Back Button - Neon Cyan */}
-            <Button
-              variant="ghost"
-              onClick={() => setIsAddingLesson(false)}
-              className="gap-2 text-lg font-bold px-4 py-3 h-auto rounded-xl"
-              style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.08)' }}
-            >
-              <ArrowRight className="w-7 h-7" />
-              {t.common.back}
-            </Button>
+            {/* Consistent Back Button */}
+            <BackButton inline onClick={() => setIsAddingLesson(false)} />
 
             <h2 className="text-2xl font-bold">{t.teacher.addNewLesson}</h2>
 
