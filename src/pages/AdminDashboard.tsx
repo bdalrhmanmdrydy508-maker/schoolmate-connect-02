@@ -19,6 +19,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
+import { BackButton } from '@/components/BackButton';
 
 
 interface AdminProfile {
