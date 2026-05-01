@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send } from 'lucide-react';
+import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send, Menu } from 'lucide-react';
+import { SideMenu } from '@/components/SideMenu';
+import { AcademicArchive } from '@/components/AcademicArchive';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -154,6 +156,8 @@ const AdminDashboard = () => {
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationSubject, setNotificationSubject] = useState<SectionSubject | null>(null);
+  const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   // Filter lessons based on search query
   const filteredLessons = lessons.filter(lesson =>
     lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
@@ -687,16 +691,27 @@ const AdminDashboard = () => {
             
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={signOut}>
-                <LogOut className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
               </Button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Side Menu */}
+      <SideMenu
+        open={showSideMenu}
+        onClose={() => setShowSideMenu(false)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenArchive={() => setShowArchive(true)}
+        onOpenProfile={() => setShowSettings(true)}
+      />
+
+      {/* Academic Archive Page */}
+      <AnimatePresence>
+        {showArchive && <AcademicArchive onClose={() => setShowArchive(false)} />}
+      </AnimatePresence>
 
       {/* Settings Modal */}
       <AnimatePresence>

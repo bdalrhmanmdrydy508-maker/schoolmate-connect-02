@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_archives: {
+        Row: {
+          academic_year: string
+          admin_id: string
+          archived_at: string
+          created_at: string
+          id: string
+          snapshot: Json
+        }
+        Insert: {
+          academic_year: string
+          admin_id: string
+          archived_at?: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+        }
+        Update: {
+          academic_year?: string
+          admin_id?: string
+          archived_at?: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           admin_id: string
