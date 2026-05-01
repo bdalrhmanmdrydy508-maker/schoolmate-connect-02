@@ -156,6 +156,8 @@ const AdminDashboard = () => {
   const [showNotificationDialog, setShowNotificationDialog] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationSubject, setNotificationSubject] = useState<SectionSubject | null>(null);
+  const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   // Filter lessons based on search query
   const filteredLessons = lessons.filter(lesson =>
     lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
