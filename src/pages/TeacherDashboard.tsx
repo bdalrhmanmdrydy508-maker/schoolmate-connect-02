@@ -22,6 +22,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
 import { MyProgram } from '@/components/MyProgram';
+import { BackButton } from '@/components/BackButton';
 
 
 interface TeacherProfile {
@@ -396,16 +397,8 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Back Button - Neon Cyan */}
-            <Button
-              variant="ghost"
-              onClick={() => setIsAddingLesson(false)}
-              className="gap-2 text-lg font-bold px-4 py-3 h-auto rounded-xl"
-              style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.08)' }}
-            >
-              <ArrowRight className="w-7 h-7" />
-              {t.common.back}
-            </Button>
+            {/* Consistent Back Button */}
+            <BackButton inline onClick={() => setIsAddingLesson(false)} />
 
             <h2 className="text-2xl font-bold">{t.teacher.addNewLesson}</h2>
 
@@ -678,15 +671,11 @@ const TeacherDashboard = () => {
               className="space-y-6"
             >
                 <div className="flex items-center justify-between">
-                  <Button
-                    variant="ghost"
+                  <BackButton
+                    inline
+                    label={t.teacher.backToSections}
                     onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
-                    className="gap-2 text-lg font-bold px-4 py-3 h-auto rounded-xl"
-                    style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.08)' }}
-                  >
-                    <ArrowRight className="w-7 h-7" />
-                    {t.teacher.backToSections}
-                  </Button>
+                  />
                   <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
                 </div>
 

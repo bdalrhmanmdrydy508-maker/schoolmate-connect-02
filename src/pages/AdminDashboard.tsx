@@ -19,6 +19,7 @@ import { Timetable } from '@/components/Timetable';
 import { StudentList } from '@/components/StudentList';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LessonPage } from '@/components/LessonPage';
+import { BackButton } from '@/components/BackButton';
 
 
 interface AdminProfile {
@@ -670,9 +671,7 @@ const AdminDashboard = () => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                   >
-                    <Button variant="ghost" size="icon" onClick={handleBack}>
-                      <ChevronLeft className="w-5 h-5" />
-                    </Button>
+                    <BackButton inline onClick={handleBack} />
                   </motion.div>
                 )}
               </AnimatePresence>
