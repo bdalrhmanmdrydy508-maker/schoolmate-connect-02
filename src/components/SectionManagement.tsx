@@ -1,10 +1,23 @@
-import { useState, useRef, useCallback } from 'react';
-import { Pencil, Trash2, X, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Trash2, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,42 +41,23 @@ interface SectionManagementProps {
   onDelete: (sectionId: string) => void;
 }
 
+/**
+ * Principal-only section actions.
+ * Renders a small cog button at the TOP-LEFT of the section card.
+ * Click → popup menu with Edit / Delete options.
+ */
 export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManagementProps) => {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const [isEditing, setIsEditing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [showActions, setShowActions] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPress = useRef(false);
 
-  const startLongPress = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setShowActions(true);
-      // Prevent the click from firing after long press
-      e.preventDefault();
-    }, 2000);
-  }, []);
-
-  const cancelLongPress = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    // If this was a long press, prevent navigation
-    if (isLongPress.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      isLongPress.current = false;
-    }
-  }, []);
+  const stop = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
   const handleSave = async () => {
     if (!editName.trim()) {
@@ -72,8 +66,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
     }
 
     if (editName.trim() === section.name) {
-      setIsEditing(false);
-      setShowActions(false);
+      setEditOpen(false);
       return;
     }
 
@@ -91,43 +84,19 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
     } else {
       toast({ title: t.common.success, description: t.sectionManagement.sectionUpdated });
       onUpdate({ ...section, name: editName.trim() });
-      setIsEditing(false);
-      setShowActions(false);
+      setEditOpen(false);
     }
   };
 
   const handleDelete = async () => {
     setIsLoading(true);
-    
-    // Delete all related timetables
-    await supabase
-      .from('timetables')
-      .delete()
-      .eq('section_id', section.id);
 
-    // Delete all related students
-    await supabase
-      .from('students')
-      .delete()
-      .eq('section_id', section.id);
+    await supabase.from('timetables').delete().eq('section_id', section.id);
+    await supabase.from('students').delete().eq('section_id', section.id);
+    await supabase.from('teacher_assignments').delete().eq('section_id', section.id);
+    await supabase.from('lessons').delete().eq('section_id', section.id);
 
-    // Delete all related assignments
-    await supabase
-      .from('teacher_assignments')
-      .delete()
-      .eq('section_id', section.id);
-
-    // Delete all related lessons
-    await supabase
-      .from('lessons')
-      .delete()
-      .eq('section_id', section.id);
-
-    // Delete the section
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', section.id);
+    const { error } = await supabase.from('sections').delete().eq('id', section.id);
 
     setIsLoading(false);
     setDeleteDialogOpen(false);
@@ -141,106 +110,73 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
     }
   };
 
-  const handleCancel = () => {
-    setEditName(section.name);
-    setIsEditing(false);
-    setShowActions(false);
-  };
-
-  if (isEditing) {
-    return (
-      <div 
-        className="absolute inset-0 z-10 flex items-center justify-center p-3 bg-card rounded-xl border border-border"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 w-full">
-          <Input
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            className="flex-1 h-8"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave();
-              if (e.key === 'Escape') handleCancel();
-            }}
-          />
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={handleSave}
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-green-600" />}
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={handleCancel}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Long-press overlay to capture touch/mouse events */}
+      {/* Settings cog at TOP-LEFT of the section card */}
       <div
-        className="absolute inset-0 z-[5]"
-        onMouseDown={startLongPress}
-        onMouseUp={cancelLongPress}
-        onMouseLeave={cancelLongPress}
-        onTouchStart={startLongPress}
-        onTouchEnd={cancelLongPress}
-        onTouchCancel={cancelLongPress}
-        onClick={handleClick}
-      />
+        className="absolute top-2 left-2 z-20"
+        onClick={stop}
+        onMouseDown={stop}
+        onTouchStart={stop}
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-sm hover:bg-accent"
+              aria-label={t.sectionManagement.editSection}
+            >
+              <SettingsIcon className="w-4 h-4 text-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" onClick={stop}>
+            <DropdownMenuItem onSelect={() => { setEditName(section.name); setEditOpen(true); }}>
+              <Pencil className="w-4 h-4 mr-2" />
+              {t.sectionManagement.editSection}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => setDeleteDialogOpen(true)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {t.sectionManagement.deleteSection}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-      {/* Action buttons shown after long press */}
-      {showActions && (
-        <div 
-          className="absolute inset-0 z-10 flex items-center justify-center gap-3 bg-card/95 backdrop-blur-sm rounded-xl border border-primary/30"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => {
-              setIsEditing(true);
-            }}
-          >
-            <Pencil className="w-4 h-4" />
-            {t.sectionManagement.editSection}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => {
-              setDeleteDialogOpen(true);
-            }}
-          >
-            <Trash2 className="w-4 h-4" />
-            {t.sectionManagement.deleteSection}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 absolute top-2 right-2"
-            onClick={() => setShowActions(false)}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+      {/* Edit name modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent onClick={stop}>
+          <DialogHeader>
+            <DialogTitle>{t.sectionManagement.editSection}</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') setEditOpen(false);
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isLoading}>
+              {t.common.cancel}
+            </Button>
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t.common.save}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
+      {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent onClick={stop}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t.sectionManagement.deleteSection}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -253,7 +189,7 @@ export const SectionManagement = ({ section, onUpdate, onDelete }: SectionManage
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive hover:bg-destructive/90"
               disabled={isLoading}
