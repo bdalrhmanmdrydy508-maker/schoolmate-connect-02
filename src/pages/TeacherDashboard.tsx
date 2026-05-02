@@ -628,6 +628,30 @@ const TeacherDashboard = () => {
         </div>
       </header>
 
+      {/* Side Menu (Teacher: no Dashboard, no Archive entry) */}
+      <SideMenu
+        open={showSideMenu}
+        onClose={() => setShowSideMenu(false)}
+        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenArchive={() => setShowSettings(true)}
+        showDashboard={false}
+      />
+
+      {/* Profile Page */}
+      <AnimatePresence>
+        {showProfile && profile && (
+          <ProfilePage
+            fullName={profile.full_name}
+            email={profile.email}
+            roleLabel={t.roles.teacher}
+            extraLabel={profile.subject}
+            extraIcon="subject"
+            onClose={() => setShowProfile(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Settings Modal */}
       <AnimatePresence>
         {showSettings && profile && (
