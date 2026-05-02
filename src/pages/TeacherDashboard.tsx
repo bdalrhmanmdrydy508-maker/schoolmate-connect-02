@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight, Tag, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight, Tag, ArrowRight, AlertTriangle, Menu } from 'lucide-react';
+import { SideMenu } from '@/components/SideMenu';
+import { ProfilePage } from '@/components/ProfilePage';
 import { ScrollDatePicker } from '@/components/ScrollDatePicker';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -64,6 +66,8 @@ const TeacherDashboard = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students' | 'program'>('lessons');
   const [lessonSearchQuery, setLessonSearchQuery] = useState('');
