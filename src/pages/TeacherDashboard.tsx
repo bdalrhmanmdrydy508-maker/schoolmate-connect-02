@@ -628,14 +628,14 @@ const TeacherDashboard = () => {
         </div>
       </header>
 
-      {/* Side Menu (Teacher: no Dashboard, no Archive entry) */}
+      {/* Side Menu (Teacher: Profile + Settings + Logout only) */}
       <SideMenu
         open={showSideMenu}
         onClose={() => setShowSideMenu(false)}
         onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
-        onOpenArchive={() => setShowSettings(true)}
         showDashboard={false}
+        showArchive={false}
       />
 
       {/* Profile Page */}
