@@ -789,7 +789,10 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="px-3 py-4">
+      <main className="px-3 py-4 relative">
+        {currentView !== 'levels' && (
+          <BackButton onClick={handleBack} />
+        )}
         <AnimatePresence mode="wait">
           {/* Levels View */}
           {currentView === 'levels' && (
