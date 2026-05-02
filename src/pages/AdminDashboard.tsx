@@ -671,18 +671,10 @@ const AdminDashboard = () => {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="px-3 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <AnimatePresence>
-                {currentView !== 'levels' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                  >
-                    <BackButton inline onClick={handleBack} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
+              </Button>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
                   {profile?.full_name || t.roles.admin}
@@ -692,12 +684,9 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
-                <Menu className="w-6 h-6" />
-              </Button>
             </div>
           </div>
         </div>
@@ -707,10 +696,30 @@ const AdminDashboard = () => {
       <SideMenu
         open={showSideMenu}
         onClose={() => setShowSideMenu(false)}
+        onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenDashboard={() => setShowControlPanel(true)}
         onOpenArchive={() => setShowArchive(true)}
-        onOpenProfile={() => setShowSettings(true)}
+        showDashboard
       />
+
+      {/* Profile Page */}
+      <AnimatePresence>
+        {showProfile && profile && (
+          <ProfilePage
+            fullName={profile.full_name}
+            roleLabel={t.roles.admin}
+            extraLabel={profile.institution_name}
+            extraIcon="institution"
+            onClose={() => setShowProfile(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Control Panel (Dashboard) */}
+      <AnimatePresence>
+        {showControlPanel && <ControlPanel onClose={() => setShowControlPanel(false)} />}
+      </AnimatePresence>
 
       {/* Academic Archive Page */}
       <AnimatePresence>
