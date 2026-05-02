@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight, Tag, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Settings, LogOut, FolderOpen, Upload, Bell, Check, X, BookOpen, Users, Calendar, ClipboardList, FileUp, FileText, Heading1, List, Loader2, Clock, Search, Pencil, ChevronRight, Tag, ArrowRight, AlertTriangle, Menu } from 'lucide-react';
+import { SideMenu } from '@/components/SideMenu';
+import { ProfilePage } from '@/components/ProfilePage';
 import { ScrollDatePicker } from '@/components/ScrollDatePicker';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -64,6 +66,8 @@ const TeacherDashboard = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [selectedSection, setSelectedSection] = useState<Assignment | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeView, setActiveView] = useState<'lessons' | 'timetable' | 'students' | 'program'>('lessons');
   const [lessonSearchQuery, setLessonSearchQuery] = useState('');
@@ -380,11 +384,8 @@ const TeacherDashboard = () => {
               </div>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                  <Settings className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={signOut}>
-                  <LogOut className="w-5 h-5" />
+                <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                  <Menu className="w-6 h-6" />
                 </Button>
               </div>
             </div>
@@ -619,16 +620,37 @@ const TeacherDashboard = () => {
                 </div>
               )}
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={signOut}>
-                <LogOut className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
               </Button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Side Menu (Teacher: Profile + Settings + Logout only) */}
+      <SideMenu
+        open={showSideMenu}
+        onClose={() => setShowSideMenu(false)}
+        onOpenProfile={() => setShowProfile(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        showDashboard={false}
+        showArchive={false}
+      />
+
+      {/* Profile Page */}
+      <AnimatePresence>
+        {showProfile && profile && (
+          <ProfilePage
+            fullName={profile.full_name}
+            email={profile.email}
+            roleLabel={t.roles.teacher}
+            extraLabel={profile.subject}
+            extraIcon="subject"
+            onClose={() => setShowProfile(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Settings Modal */}
       <AnimatePresence>

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Archive, User, LogOut, X } from 'lucide-react';
+import { Settings, Archive, User, LogOut, X, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -17,25 +17,39 @@ import { useAuth } from '@/contexts/AuthContext';
 interface SideMenuProps {
   open: boolean;
   onClose: () => void;
-  onOpenSettings: () => void;
-  onOpenArchive: () => void;
   onOpenProfile: () => void;
+  onOpenSettings: () => void;
+  onOpenDashboard?: () => void;
+  onOpenArchive?: () => void;
+  showDashboard?: boolean;
+  showArchive?: boolean;
 }
 
-export const SideMenu = ({ open, onClose, onOpenSettings, onOpenArchive, onOpenProfile }: SideMenuProps) => {
+export const SideMenu = ({
+  open,
+  onClose,
+  onOpenProfile,
+  onOpenSettings,
+  onOpenDashboard,
+  onOpenArchive,
+  showDashboard = true,
+  showArchive = true,
+}: SideMenuProps) => {
   const { signOut } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const handleItemClick = (action: () => void) => {
-    action();
     onClose();
+    // Slight delay so drawer closes smoothly before the next page opens
+    setTimeout(action, 120);
   };
 
   const items = [
-    { icon: Settings, label: 'الإعدادات', action: onOpenSettings },
-    { icon: Archive, label: 'الأرشيف', action: onOpenArchive },
-    { icon: User, label: 'المعلومات الشخصية', action: onOpenProfile },
-  ];
+    { icon: User, label: 'الملف الشخصي', action: onOpenProfile, show: true },
+    { icon: Settings, label: 'الإعدادات', action: onOpenSettings, show: true },
+    { icon: LayoutDashboard, label: 'لوحة التحكم', action: onOpenDashboard ?? (() => {}), show: showDashboard && !!onOpenDashboard },
+    { icon: Archive, label: 'الأرشيف', action: onOpenArchive ?? (() => {}), show: showArchive && !!onOpenArchive },
+  ].filter(i => i.show);
 
   return (
     <>

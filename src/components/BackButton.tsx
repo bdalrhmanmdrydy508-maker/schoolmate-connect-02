@@ -1,6 +1,6 @@
 import { ArrowRight, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
 
 interface BackButtonProps {
   onClick: () => void;
@@ -11,10 +11,11 @@ interface BackButtonProps {
 }
 
 /**
- * Consistent, highly visible back button.
- * - Floats at the true top-right corner by default.
- * - Neon-cyan accent so it stands out in light & dark modes.
- * - RTL-aware arrow direction (arrow points toward "previous").
+ * Unified, formal back button used on every internal page.
+ * - Calm neutral colors that work in light & dark modes.
+ * - No glow/neon effects.
+ * - RTL-aware arrow direction.
+ * - Default position: fixed at the true top-right corner of the page.
  */
 export const BackButton = ({ onClick, inline = false, label, className = '' }: BackButtonProps) => {
   const { t, language } = useLanguage();
@@ -23,29 +24,23 @@ export const BackButton = ({ onClick, inline = false, label, className = '' }: B
   const text = label ?? t.common.back;
 
   const button = (
-    <motion.button
+    <Button
       type="button"
+      variant="outline"
+      size="sm"
       onClick={onClick}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
       aria-label={text}
-      className={`flex items-center gap-2 rounded-2xl border-2 px-4 py-2.5 font-bold shadow-lg backdrop-blur-md transition-all ${className}`}
-      style={{
-        color: '#00e5ff',
-        borderColor: 'rgba(0,229,255,0.6)',
-        background: 'rgba(0,229,255,0.10)',
-        boxShadow: '0 0 18px rgba(0,229,255,0.35)',
-      }}
+      className={`gap-2 h-10 px-3 rounded-lg border border-border bg-card text-foreground hover:bg-accent shadow-sm ${className}`}
     >
-      <Arrow className="w-6 h-6" />
-      <span className="text-base">{text}</span>
-    </motion.button>
+      <Arrow className="w-5 h-5" />
+      <span className="text-sm font-medium">{text}</span>
+    </Button>
   );
 
   if (inline) return button;
 
   return (
-    <div className="fixed top-3 right-3 z-[60]">
+    <div className="absolute top-3 right-3 z-40">
       {button}
     </div>
   );

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send, Menu } from 'lucide-react';
 import { SideMenu } from '@/components/SideMenu';
 import { AcademicArchive } from '@/components/AcademicArchive';
+import { ControlPanel } from '@/components/ControlPanel';
+import { ProfilePage } from '@/components/ProfilePage';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -158,6 +160,8 @@ const AdminDashboard = () => {
   const [notificationSubject, setNotificationSubject] = useState<SectionSubject | null>(null);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
+  const [showControlPanel, setShowControlPanel] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   // Filter lessons based on search query
   const filteredLessons = lessons.filter(lesson =>
     lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
@@ -667,18 +671,10 @@ const AdminDashboard = () => {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="px-3 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <AnimatePresence>
-                {currentView !== 'levels' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                  >
-                    <BackButton inline onClick={handleBack} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
+              </Button>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
                   {profile?.full_name || t.roles.admin}
@@ -688,12 +684,9 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
-                <Menu className="w-6 h-6" />
-              </Button>
             </div>
           </div>
         </div>
@@ -703,10 +696,30 @@ const AdminDashboard = () => {
       <SideMenu
         open={showSideMenu}
         onClose={() => setShowSideMenu(false)}
+        onOpenProfile={() => setShowProfile(true)}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenDashboard={() => setShowControlPanel(true)}
         onOpenArchive={() => setShowArchive(true)}
-        onOpenProfile={() => setShowSettings(true)}
+        showDashboard
       />
+
+      {/* Profile Page */}
+      <AnimatePresence>
+        {showProfile && profile && (
+          <ProfilePage
+            fullName={profile.full_name}
+            roleLabel={t.roles.admin}
+            extraLabel={profile.institution_name}
+            extraIcon="institution"
+            onClose={() => setShowProfile(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Control Panel (Dashboard) */}
+      <AnimatePresence>
+        {showControlPanel && <ControlPanel onClose={() => setShowControlPanel(false)} />}
+      </AnimatePresence>
 
       {/* Academic Archive Page */}
       <AnimatePresence>
@@ -776,7 +789,10 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className="px-3 py-4">
+      <main className="px-3 py-4 relative">
+        {currentView !== 'levels' && (
+          <BackButton onClick={handleBack} />
+        )}
         <AnimatePresence mode="wait">
           {/* Levels View */}
           {currentView === 'levels' && (
