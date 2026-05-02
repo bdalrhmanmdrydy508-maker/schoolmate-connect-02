@@ -20,8 +20,9 @@ interface SideMenuProps {
   onOpenProfile: () => void;
   onOpenSettings: () => void;
   onOpenDashboard?: () => void;
-  onOpenArchive: () => void;
+  onOpenArchive?: () => void;
   showDashboard?: boolean;
+  showArchive?: boolean;
 }
 
 export const SideMenu = ({
@@ -32,6 +33,7 @@ export const SideMenu = ({
   onOpenDashboard,
   onOpenArchive,
   showDashboard = true,
+  showArchive = true,
 }: SideMenuProps) => {
   const { signOut } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -46,7 +48,7 @@ export const SideMenu = ({
     { icon: User, label: 'الملف الشخصي', action: onOpenProfile, show: true },
     { icon: Settings, label: 'الإعدادات', action: onOpenSettings, show: true },
     { icon: LayoutDashboard, label: 'لوحة التحكم', action: onOpenDashboard ?? (() => {}), show: showDashboard && !!onOpenDashboard },
-    { icon: Archive, label: 'الأرشيف', action: onOpenArchive, show: true },
+    { icon: Archive, label: 'الأرشيف', action: onOpenArchive ?? (() => {}), show: showArchive && !!onOpenArchive },
   ].filter(i => i.show);
 
   return (
