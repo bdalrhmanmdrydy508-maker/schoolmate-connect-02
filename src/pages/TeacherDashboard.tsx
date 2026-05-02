@@ -620,11 +620,8 @@ const TeacherDashboard = () => {
                 </div>
               )}
               <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={signOut}>
-                <LogOut className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
               </Button>
             </div>
           </div>
