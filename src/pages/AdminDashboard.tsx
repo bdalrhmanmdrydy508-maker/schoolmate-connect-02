@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, LogOut, ChevronLeft, Users, BookOpen, Plus, Book, GraduationCap, UserCheck, Clock, X, FileText, Calendar, Pencil, Trash2, Search, ClipboardList, Bell, Send, Menu } from 'lucide-react';
 import { SideMenu } from '@/components/SideMenu';
 import { AcademicArchive } from '@/components/AcademicArchive';
+import { ControlPanel } from '@/components/ControlPanel';
+import { ProfilePage } from '@/components/ProfilePage';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -158,6 +160,8 @@ const AdminDashboard = () => {
   const [notificationSubject, setNotificationSubject] = useState<SectionSubject | null>(null);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
+  const [showControlPanel, setShowControlPanel] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   // Filter lessons based on search query
   const filteredLessons = lessons.filter(lesson =>
     lesson.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
