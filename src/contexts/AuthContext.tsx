@@ -212,27 +212,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchUserRole]);
 
   const signOut = useCallback(async () => {
+    // 1) Clear local state and storage IMMEDIATELY (no awaits) so UI never freezes
     try {
-      // Try a global sign-out; fall back to local if it fails (e.g. offline / expired session)
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.warn('Global sign out failed, falling back to local:', error);
-        await supabase.auth.signOut({ scope: 'local' as any }).catch(() => {});
-      }
-    } catch (error) {
-      console.error('Sign out error:', error);
-    } finally {
-      // Always clear local state and any cached auth tokens, then redirect to login
       setUser(null);
       setSession(null);
       setRole(null);
-      try {
-        Object.keys(localStorage)
-          .filter((k) => k.startsWith('sb-') || k.includes('supabase'))
-          .forEach((k) => localStorage.removeItem(k));
-      } catch {}
-      // Hard redirect ensures any stale state is cleared and user lands on login
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('sb-') || k.includes('supabase'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn('Local cleanup error:', e);
+    }
+
+    // 2) Fire-and-forget server sign-out with a hard timeout so it can never block
+    try {
+      const serverSignOut = supabase.auth.signOut().catch((err) => {
+        console.warn('Server sign out failed (ignored):', err);
+      });
+      const timeout = new Promise((resolve) => setTimeout(resolve, 1500));
+      Promise.race([serverSignOut, timeout]).catch(() => {});
+    } catch (err) {
+      console.warn('Sign out dispatch error (ignored):', err);
+    }
+
+    // 3) Hard redirect to login — guaranteed to run, even if anything above failed
+    try {
       window.location.replace('/');
+    } catch {
+      window.location.href = '/';
     }
   }, []);
 
