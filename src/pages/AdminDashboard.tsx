@@ -670,23 +670,23 @@ const AdminDashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="px-3 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3" dir="ltr">
+            {/* Left: menu + theme */}
+            <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
                 <Menu className="w-6 h-6" />
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  {profile?.full_name || t.roles.admin}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.institution_name || t.settings.institution}
-                </p>
-              </div>
+              <ThemeToggle />
             </div>
 
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
+            {/* Right: principal name + school name */}
+            <div className="text-right min-w-0" dir="rtl">
+              <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
+                {profile?.full_name || t.roles.admin}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                {profile?.institution_name || t.settings.institution}
+              </p>
             </div>
           </div>
         </div>
