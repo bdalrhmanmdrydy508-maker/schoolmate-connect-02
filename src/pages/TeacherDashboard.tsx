@@ -395,8 +395,8 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Consistent Back Button */}
-            <BackButton inline onClick={() => setIsAddingLesson(false)} />
+            {/* Consistent Back Button on its own row */}
+            <BackButton onClick={() => setIsAddingLesson(false)} />
 
             <h2 className="text-2xl font-bold">{t.teacher.addNewLesson}</h2>
 
@@ -686,14 +686,11 @@ const TeacherDashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-                <div className="flex items-center justify-between">
-                  <BackButton
-                    inline
-                    label={t.teacher.backToSections}
-                    onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
-                  />
-                  <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
-                </div>
+                <BackButton
+                  onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
+                  label={t.teacher.backToSections}
+                />
+                <h2 className="text-xl font-bold text-right">{(selectedSection as any).sections?.name}</h2>
 
                 {/* Action Buttons - responsive grid, equal sizing */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
