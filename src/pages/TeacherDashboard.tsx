@@ -372,21 +372,18 @@ const TeacherDashboard = () => {
         {/* Minimal Header */}
         <header className="sticky top-0 z-50 glass border-b border-border/50">
           <div className="px-3 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-foreground">{profile?.full_name}</h1>
-                  <span className="text-xs text-muted-foreground">{(selectedSection as any).subjects?.name}</span>
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3" dir="ltr">
+              {/* Left: menu + theme */}
               <div className="flex items-center gap-2">
-                <ThemeToggle />
                 <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
                   <Menu className="w-6 h-6" />
                 </Button>
+                <ThemeToggle />
+              </div>
+              {/* Right: teacher name + subject */}
+              <div className="text-right min-w-0" dir="rtl">
+                <h1 className="text-base sm:text-lg font-bold text-foreground truncate">{profile?.full_name}</h1>
+                <span className="text-xs text-muted-foreground truncate block">{(selectedSection as any).subjects?.name}</span>
               </div>
             </div>
           </div>
@@ -398,8 +395,8 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Consistent Back Button */}
-            <BackButton inline onClick={() => setIsAddingLesson(false)} />
+            {/* Consistent Back Button on its own row */}
+            <BackButton onClick={() => setIsAddingLesson(false)} />
 
             <h2 className="text-2xl font-bold">{t.teacher.addNewLesson}</h2>
 
@@ -597,20 +594,13 @@ const TeacherDashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="px-3 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  {profile?.full_name || t.roles.teacher}
-                </h1>
-                <Badge variant="secondary">{profile?.subject}</Badge>
-              </div>
-            </div>
-            
+          <div className="flex items-center justify-between gap-3" dir="ltr">
+            {/* Left: menu + theme + notifications indicator */}
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
+                <Menu className="w-6 h-6" />
+              </Button>
+              <ThemeToggle />
               {adminNotifications.filter(n => !n.is_read).length > 0 && (
                 <div className="relative">
                   <Bell className="w-5 h-5 text-warning animate-pulse" />
@@ -619,10 +609,14 @@ const TeacherDashboard = () => {
                   </span>
                 </div>
               )}
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setShowSideMenu(true)} aria-label="القائمة">
-                <Menu className="w-6 h-6" />
-              </Button>
+            </div>
+
+            {/* Right: teacher name + subject */}
+            <div className="text-right min-w-0" dir="rtl">
+              <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
+                {profile?.full_name || t.roles.teacher}
+              </h1>
+              <Badge variant="secondary">{profile?.subject}</Badge>
             </div>
           </div>
         </div>
@@ -692,14 +686,11 @@ const TeacherDashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-                <div className="flex items-center justify-between">
-                  <BackButton
-                    inline
-                    label={t.teacher.backToSections}
-                    onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
-                  />
-                  <h2 className="text-xl font-bold">{(selectedSection as any).sections?.name}</h2>
-                </div>
+                <BackButton
+                  onClick={() => { setSelectedSection(null); setActiveView('lessons'); setLessonSearchQuery(''); }}
+                  label={t.teacher.backToSections}
+                />
+                <h2 className="text-xl font-bold text-right">{(selectedSection as any).sections?.name}</h2>
 
                 {/* Action Buttons - responsive grid, equal sizing */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

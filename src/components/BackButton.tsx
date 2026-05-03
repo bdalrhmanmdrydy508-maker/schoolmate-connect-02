@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 interface BackButtonProps {
   onClick: () => void;
-  /** When true, renders inline (in flow). Otherwise floats fixed at top-right. */
+  /** When true, renders just the button (no wrapper row). Otherwise renders inside its own full-width row aligned to the right. */
   inline?: boolean;
   label?: string;
   className?: string;
@@ -12,10 +12,10 @@ interface BackButtonProps {
 
 /**
  * Unified, formal back button used on every internal page.
- * - Calm neutral colors that work in light & dark modes.
- * - No glow/neon effects.
+ * - Calm neutral colors (no glow / no neon).
  * - RTL-aware arrow direction.
- * - Default position: fixed at the true top-right corner of the page.
+ * - Always sits on its own row, aligned to the true right, with clear spacing
+ *   so it never overlaps page titles or content.
  */
 export const BackButton = ({ onClick, inline = false, label, className = '' }: BackButtonProps) => {
   const { t, language } = useLanguage();
@@ -39,9 +39,10 @@ export const BackButton = ({ onClick, inline = false, label, className = '' }: B
 
   if (inline) return button;
 
+  // Own row, right-aligned (true right in both LTR & RTL), with bottom spacing
   return (
-    <div className="absolute top-3 right-3 z-40">
-      {button}
+    <div className="w-full flex justify-end mb-4" dir="ltr">
+      <div dir={isRTL ? 'rtl' : 'ltr'}>{button}</div>
     </div>
   );
 };
