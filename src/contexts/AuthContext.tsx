@@ -213,12 +213,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      // Try a global sign-out; fall back to local if it fails (e.g. offline / expired session)
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.warn('Global sign out failed, falling back to local:', error);
+        await supabase.auth.signOut({ scope: 'local' as any }).catch(() => {});
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      // Always clear local state and any cached auth tokens, then redirect to login
       setUser(null);
       setSession(null);
       setRole(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('sb-') || k.includes('supabase'))
+          .forEach((k) => localStorage.removeItem(k));
+      } catch {}
+      // Hard redirect ensures any stale state is cleared and user lands on login
+      window.location.replace('/');
     }
   }, []);
 
