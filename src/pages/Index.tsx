@@ -7,8 +7,15 @@ import LoadingScreen from '@/components/LoadingScreen';
 
 const Index = () => {
   const { user, role, loading, initialLoading } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
-  const [splashComplete, setSplashComplete] = useState(false);
+  const skipSplash = typeof window !== 'undefined' && sessionStorage.getItem('skipSplash') === '1';
+  const [showSplash, setShowSplash] = useState(!skipSplash);
+  const [splashComplete, setSplashComplete] = useState(skipSplash);
+
+  useEffect(() => {
+    if (skipSplash) {
+      try { sessionStorage.removeItem('skipSplash'); } catch {}
+    }
+  }, [skipSplash]);
 
   // Handle splash screen completion
   const handleSplashComplete = useCallback(() => {
