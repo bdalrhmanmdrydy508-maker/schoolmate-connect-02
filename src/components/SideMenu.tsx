@@ -104,7 +104,11 @@ export const SideMenu = ({
                 <Button
                   variant="destructive"
                   className="w-full gap-2 h-12"
-                  onClick={() => setConfirmLogout(true)}
+                  onClick={() => {
+                    // Close drawer FIRST, then open confirm dialog on top
+                    onClose();
+                    setTimeout(() => setConfirmLogout(true), 200);
+                  }}
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-semibold">تسجيل الخروج</span>
@@ -116,7 +120,7 @@ export const SideMenu = ({
       </AnimatePresence>
 
       <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir="rtl" className="z-[100]">
           <AlertDialogHeader>
             <AlertDialogTitle>هل تريد تسجيل الخروج؟</AlertDialogTitle>
             <AlertDialogDescription>
