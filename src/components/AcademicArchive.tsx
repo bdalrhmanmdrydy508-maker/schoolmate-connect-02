@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Archive, Calendar, BookOpen, Users, FileText, Loader2, ArrowRight } from 'lucide-react';
+import { Archive, Calendar, BookOpen, Users, FileText, Loader2, ArrowRight, RotateCcw, GraduationCap, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -27,27 +27,54 @@ interface AcademicArchiveProps {
   onClose: () => void;
 }
 
-type View = 'list' | 'year' | 'section' | 'subject';
+type View = 'list' | 'year' | 'stream' | 'branch' | 'section' | 'subject';
+
+const BRANCHES_DATA: Record<string, { literary: string[]; scientific: string[] }> = {
+  'الأولى ثانوي': { literary: ['آداب'], scientific: ['علمي'] },
+  'الثانية ثانوي': {
+    literary: ['آداب وفلسفة', 'لغات أجنبية'],
+    scientific: ['علوم تجريبية', 'رياضي', 'تقني رياضي', 'تسيير واقتصاد'],
+  },
+  'الثالثة ثانوي': {
+    literary: ['آداب وفلسفة', 'لغات أجنبية'],
+    scientific: ['علوم تجريبية', 'رياضي', 'تقني رياضي', 'تسيير واقتصاد'],
+  },
+};
+
+const classifyBranch = (branchName: string, levelName?: string): 'literary' | 'scientific' | 'other' => {
+  if (levelName && BRANCHES_DATA[levelName]) {
+    if (BRANCHES_DATA[levelName].literary.includes(branchName)) return 'literary';
+    if (BRANCHES_DATA[levelName].scientific.includes(branchName)) return 'scientific';
+  }
+  // Fallback: scan all levels
+  for (const lvl of Object.values(BRANCHES_DATA)) {
+    if (lvl.literary.includes(branchName)) return 'literary';
+    if (lvl.scientific.includes(branchName)) return 'scientific';
+  }
+  return 'other';
+};
 
 export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
   const { toast } = useToast();
   const [archives, setArchives] = useState<ArchiveRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [archiving, setArchiving] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmRestore, setConfirmRestore] = useState(false);
   const [hasCurrentData, setHasCurrentData] = useState(false);
   const [adminId, setAdminId] = useState<string | null>(null);
 
   const [view, setView] = useState<View>('list');
   const [selectedArchive, setSelectedArchive] = useState<ArchiveRow | null>(null);
+  const [selectedStream, setSelectedStream] = useState<'literary' | 'scientific' | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [selectedSection, setSelectedSection] = useState<any>(null);
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
 
   const currentYear = getCurrentAcademicYear();
 
-  useEffect(() => {
-    init();
-  }, []);
+  useEffect(() => { init(); }, []);
 
   const init = async () => {
     setLoading(true);
@@ -55,11 +82,7 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
     if (!user) { setLoading(false); return; }
 
     const { data: profile } = await supabase
-      .from('admin_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
+      .from('admin_profiles').select('id').eq('user_id', user.id).maybeSingle();
     if (profile) setAdminId(profile.id);
 
     const [{ count: sectionCount }, { count: lessonCount }] = await Promise.all([
@@ -81,6 +104,18 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
 
   const handleArchive = async () => {
     if (!adminId) return;
+
+    // Duplicate guard
+    if (archives.some(a => a.academic_year === currentYear)) {
+      toast({
+        title: 'سنة مكررة',
+        description: 'هذه السنة الدراسية مؤرشفة بالفعل',
+        variant: 'destructive',
+      });
+      setConfirmArchive(false);
+      return;
+    }
+
     setArchiving(true);
     try {
       const [sections, branches, levels, sectionSubjects, lessons, students, timetables, assignments, teachers] = await Promise.all([
@@ -107,14 +142,11 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
         teachers: teachers.data || [],
       };
 
-      const { error } = await supabase
-        .from('academic_archives')
-        .insert({
-          admin_id: adminId,
-          academic_year: currentYear,
-          snapshot,
-        });
-
+      const { error } = await supabase.from('academic_archives').insert({
+        admin_id: adminId,
+        academic_year: currentYear,
+        snapshot,
+      });
       if (error) throw error;
 
       await supabase.from('lessons').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -135,9 +167,47 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
     }
   };
 
+  const handleRestore = async () => {
+    if (!selectedArchive) return;
+    setRestoring(true);
+    try {
+      const snap = selectedArchive.snapshot || {};
+
+      // Restore in FK order: levels → branches → sections → section_subjects → lessons
+      if (snap.levels?.length) {
+        await supabase.from('levels').upsert(snap.levels, { onConflict: 'id' });
+      }
+      if (snap.branches?.length) {
+        await supabase.from('branches').upsert(snap.branches, { onConflict: 'id' });
+      }
+      if (snap.sections?.length) {
+        await supabase.from('sections').upsert(snap.sections, { onConflict: 'id' });
+      }
+      if (snap.section_subjects?.length) {
+        await supabase.from('section_subjects').upsert(snap.section_subjects, { onConflict: 'id' });
+      }
+      if (snap.lessons?.length) {
+        await supabase.from('lessons').upsert(snap.lessons, { onConflict: 'id' });
+      }
+
+      toast({
+        title: 'تمت الاستعادة',
+        description: `تم استرجاع بيانات سنة ${selectedArchive.academic_year}`,
+      });
+      setConfirmRestore(false);
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: 'خطأ', description: e.message || 'فشلت عملية الاستعادة', variant: 'destructive' });
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   const handleBack = () => {
     if (view === 'subject') { setView('section'); setSelectedSubject(null); }
-    else if (view === 'section') { setView('year'); setSelectedSection(null); }
+    else if (view === 'section') { setView('branch'); setSelectedSection(null); }
+    else if (view === 'branch') { setView('stream'); setSelectedBranch(null); }
+    else if (view === 'stream') { setView('year'); setSelectedStream(null); }
     else if (view === 'year') { setView('list'); setSelectedArchive(null); }
     else onClose();
   };
@@ -145,15 +215,8 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
   const renderListView = () => (
     <div className="space-y-4">
       {hasCurrentData && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-start"
-        >
-          <Button
-            onClick={() => setConfirmArchive(true)}
-            className="gradient-primary shadow-lg gap-2 h-12 px-5"
-          >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
+          <Button onClick={() => setConfirmArchive(true)} className="gradient-primary shadow-lg gap-2 h-12 px-5">
             <Archive className="w-5 h-5" />
             أرشفة السنة الدراسية الحالية ({currentYear})
           </Button>
@@ -170,9 +233,7 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
           {archives.map((a, i) => (
             <motion.button
               key={a.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               whileHover={{ scale: 1.02, y: -2 }}
               onClick={() => { setSelectedArchive(a); setView('year'); }}
               className="p-6 rounded-2xl bg-card border-2 border-border shadow-md hover:shadow-xl hover:border-primary transition-all text-right"
@@ -185,15 +246,8 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
                 أُرشفت في {new Date(a.archived_at).toLocaleDateString('ar-DZ')}
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="px-2 py-1 rounded-md bg-secondary/60">
-                  {(a.snapshot?.sections?.length || 0)} قسم
-                </span>
-                <span className="px-2 py-1 rounded-md bg-secondary/60">
-                  {(a.snapshot?.lessons?.length || 0)} درس
-                </span>
-              </div>
-              <div className="mt-3 inline-flex items-center gap-1 text-xs text-primary font-medium">
-                للقراءة فقط
+                <span className="px-2 py-1 rounded-md bg-secondary/60">{(a.snapshot?.sections?.length || 0)} قسم</span>
+                <span className="px-2 py-1 rounded-md bg-secondary/60">{(a.snapshot?.lessons?.length || 0)} درس</span>
               </div>
             </motion.button>
           ))}
@@ -204,12 +258,119 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
 
   const renderYearView = () => {
     if (!selectedArchive) return null;
-    const sections = selectedArchive.snapshot?.sections || [];
+    const branches = selectedArchive.snapshot?.branches || [];
+    const levels = selectedArchive.snapshot?.levels || [];
+    const literaryCount = branches.filter((b: any) => {
+      const lvl = levels.find((l: any) => l.id === b.level_id);
+      return classifyBranch(b.name, lvl?.name) === 'literary';
+    }).length;
+    const scientificCount = branches.filter((b: any) => {
+      const lvl = levels.find((l: any) => l.id === b.level_id);
+      return classifyBranch(b.name, lvl?.name) === 'scientific';
+    }).length;
+
     return (
       <div>
-        <h2 className="text-2xl font-bold mb-4">سنة {selectedArchive.academic_year}</h2>
+        <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+          <h2 className="text-2xl font-bold">سنة {selectedArchive.academic_year}</h2>
+          <Button
+            onClick={() => setConfirmRestore(true)}
+            variant="outline"
+            className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            <RotateCcw className="w-4 h-4" />
+            استعادة البيانات
+          </Button>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-4">اختر الشعبة</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            onClick={() => { setSelectedStream('literary'); setView('stream'); }}
+            className="p-6 rounded-2xl bg-card border-2 border-border hover:border-primary transition-all text-right"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">أدبي</h3>
+                <p className="text-xs text-muted-foreground">{literaryCount} شعبة</p>
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => { setSelectedStream('scientific'); setView('stream'); }}
+            className="p-6 rounded-2xl bg-card border-2 border-border hover:border-primary transition-all text-right"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <GraduationCap className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">علمي</h3>
+                <p className="text-xs text-muted-foreground">{scientificCount} شعبة</p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStreamView = () => {
+    if (!selectedArchive || !selectedStream) return null;
+    const branches = selectedArchive.snapshot?.branches || [];
+    const levels = selectedArchive.snapshot?.levels || [];
+    const filtered = branches.filter((b: any) => {
+      const lvl = levels.find((l: any) => l.id === b.level_id);
+      return classifyBranch(b.name, lvl?.name) === selectedStream;
+    });
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-1">
+          {selectedStream === 'literary' ? 'الشعب الأدبية' : 'الشعب العلمية'}
+        </h2>
+        <p className="text-sm text-muted-foreground mb-4">اختر الشعبة</p>
+        {filtered.length === 0 ? (
+          <p className="text-muted-foreground text-center py-12">لا توجد شعب</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map((b: any) => {
+              const lvl = levels.find((l: any) => l.id === b.level_id);
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => { setSelectedBranch(b); setView('branch'); }}
+                  className="p-4 rounded-xl bg-card border-2 border-border hover:border-primary transition-all text-right"
+                >
+                  <div className="flex items-center gap-3">
+                    <Layers className="w-5 h-5 text-primary" />
+                    <div>
+                      <div className="font-semibold">{b.name}</div>
+                      {lvl && <div className="text-xs text-muted-foreground">{lvl.name}</div>}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderBranchView = () => {
+    if (!selectedBranch || !selectedArchive) return null;
+    const sections = (selectedArchive.snapshot?.sections || []).filter(
+      (s: any) => s.branch_id === selectedBranch.id
+    );
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-1">{selectedBranch.name}</h2>
+        <p className="text-sm text-muted-foreground mb-4">الأقسام</p>
         {sections.length === 0 ? (
-          <p className="text-muted-foreground text-center py-12">لا توجد أقسام في هذا الأرشيف</p>
+          <p className="text-muted-foreground text-center py-12">لا توجد أقسام في هذه الشعبة</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {sections.map((s: any) => (
@@ -298,11 +459,8 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background overflow-y-auto"
-      dir="rtl"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-background overflow-y-auto" dir="rtl"
     >
       <header className="sticky top-0 z-10 glass border-b border-border/50">
         <div className="px-3 py-3 flex items-center justify-between">
@@ -326,13 +484,13 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
-              key={view + (selectedArchive?.id || '') + (selectedSection?.id || '') + (selectedSubject?.id || '')}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key={view + (selectedArchive?.id || '') + (selectedStream || '') + (selectedBranch?.id || '') + (selectedSection?.id || '') + (selectedSubject?.id || '')}
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
             >
               {view === 'list' && renderListView()}
               {view === 'year' && renderYearView()}
+              {view === 'stream' && renderStreamView()}
+              {view === 'branch' && renderBranchView()}
               {view === 'section' && renderSectionView()}
               {view === 'subject' && renderSubjectView()}
             </motion.div>
@@ -340,8 +498,9 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
         )}
       </main>
 
+      {/* Archive confirm */}
       <AlertDialog open={confirmArchive} onOpenChange={setConfirmArchive}>
-        <AlertDialogContent dir="rtl">
+        <AlertDialogContent dir="rtl" className="max-w-sm rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>تأكيد الأرشفة</AlertDialogTitle>
             <AlertDialogDescription>
@@ -349,16 +508,32 @@ export const AcademicArchive = ({ onClose }: AcademicArchiveProps) => {
               هذه العملية لا يمكن التراجع عنها.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse gap-2">
-            <AlertDialogAction
-              onClick={handleArchive}
-              disabled={archiving}
-              className="gap-2"
-            >
+          <AlertDialogFooter className="flex-row gap-3 sm:gap-3">
+            <AlertDialogCancel disabled={archiving} className="flex-1 m-0 h-11 rounded-xl">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive} disabled={archiving} className="flex-1 h-11 rounded-xl gap-2">
               {archiving && <Loader2 className="w-4 h-4 animate-spin" />}
-              تأكيد الأرشفة
+              تأكيد
             </AlertDialogAction>
-            <AlertDialogCancel disabled={archiving}>إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Restore confirm */}
+      <AlertDialog open={confirmRestore} onOpenChange={setConfirmRestore}>
+        <AlertDialogContent dir="rtl" className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>استعادة بيانات الأرشيف</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم استرجاع الأقسام والمواد والدروس من سنة {selectedArchive?.academic_year}
+              وإعادتها قابلة للتعديل. قد يستبدل ذلك سجلات قديمة بنفس المعرّف.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-3 sm:gap-3">
+            <AlertDialogCancel disabled={restoring} className="flex-1 m-0 h-11 rounded-xl">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRestore} disabled={restoring} className="flex-1 h-11 rounded-xl gap-2">
+              {restoring && <Loader2 className="w-4 h-4 animate-spin" />}
+              استعادة
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
