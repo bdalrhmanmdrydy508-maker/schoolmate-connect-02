@@ -37,7 +37,7 @@ const Index = () => {
   }, [splashComplete, loading]);
 
   // Show splash screen on initial load
-  if (showSplash || initialLoading) {
+  if (!skipSplash && (showSplash || initialLoading)) {
     return <LoadingScreen onComplete={handleSplashComplete} minDuration={3000} maxDuration={5000} />;
   }
 
