@@ -129,10 +129,10 @@ export const SideMenu = ({
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
             <AlertDialogAction
-              onClick={async () => {
+              onClick={() => {
                 setConfirmLogout(false);
-                onClose();
-                await signOut();
+                // Fire-and-forget: signOut handles its own redirect
+                signOut();
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
