@@ -235,7 +235,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Sign out dispatch error (ignored):', err);
     }
 
-    // 3) Hard redirect to login — guaranteed to run, even if anything above failed
+    // 3) Hard redirect to role selection — skip splash screen
+    try {
+      sessionStorage.setItem('skipSplash', '1');
+    } catch {}
     try {
       window.location.replace('/');
     } catch {

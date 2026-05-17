@@ -120,25 +120,36 @@ export const SideMenu = ({
       </AnimatePresence>
 
       <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
-        <AlertDialogContent dir="rtl" className="z-[100]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>هل تريد تسجيل الخروج؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيتم إنهاء جلستك الحالية.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse gap-2">
+        <AlertDialogContent
+          dir="rtl"
+          className="z-[100] max-w-sm rounded-2xl border border-border/60 bg-card p-0 shadow-2xl"
+        >
+          <div className="flex flex-col items-center text-center px-6 pt-7 pb-2">
+            <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+              <LogOut className="w-7 h-7 text-destructive" />
+            </div>
+            <AlertDialogHeader className="space-y-2">
+              <AlertDialogTitle className="text-xl font-bold">
+                هل تريد تسجيل الخروج؟
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                سيتم إنهاء جلستك الحالية والعودة إلى شاشة اختيار الدور.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="flex-row gap-3 p-5 pt-4 sm:gap-3">
+            <AlertDialogCancel className="flex-1 m-0 h-11 rounded-xl">
+              إلغاء
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setConfirmLogout(false);
-                // Fire-and-forget: signOut handles its own redirect
                 signOut();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="flex-1 h-11 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               تأكيد
             </AlertDialogAction>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
