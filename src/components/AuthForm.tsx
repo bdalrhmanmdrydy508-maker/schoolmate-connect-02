@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { detectIdentifierKind, identifierToAuthEmail, isPhoneAuthEmail } from '@/lib/authIdentifier';
+import { detectIdentifierKind, identifierToAuthEmail } from '@/lib/authIdentifier';
 import { z } from 'zod';
 
 // Secret code for admin access
