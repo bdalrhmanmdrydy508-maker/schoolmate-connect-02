@@ -208,7 +208,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               .insert({
                 user_id: authData.user.id,
                 full_name: formData.fullName,
-                email: formData.email,
+                email: authEmail,
                 institution_name: formData.institutionName,
               });
 
