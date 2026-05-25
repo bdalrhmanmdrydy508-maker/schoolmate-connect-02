@@ -329,16 +329,21 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">{t.auth.email}</Label>
+            <Label htmlFor="email" className="text-foreground">البريد الإلكتروني أو رقم الهاتف</Label>
             <div className="relative">
-              <Mail className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+              {(() => {
+                const k = detectIdentifierKind(formData.email);
+                const Icon = k === 'phone' ? Phone : k === 'email' ? Mail : AtSign;
+                return <Icon className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />;
+              })()}
               <Input
                 id="email"
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="username"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
-                placeholder="example@email.com"
                 dir="ltr"
               />
             </div>
