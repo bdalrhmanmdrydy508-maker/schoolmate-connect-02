@@ -222,7 +222,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               .insert({
                 user_id: authData.user.id,
                 full_name: formData.fullName,
-                email: formData.email,
+                email: authEmail,
                 subject: formData.subject,
                 teacher_id: authData.user.id.substring(0, 8).toUpperCase(),
                 status: 'pending', // Requires admin approval
