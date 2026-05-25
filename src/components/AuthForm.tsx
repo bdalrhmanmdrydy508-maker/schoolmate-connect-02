@@ -55,7 +55,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   // Identifier validator: email OR phone
   const identifierField = z.string().refine(
     (v) => detectIdentifierKind(v) !== 'invalid',
-    t.auth.identifierInvalid || 'أدخل بريداً إلكترونياً أو رقم هاتف صحيحاً'
+    'أدخل بريداً إلكترونياً أو رقم هاتف صحيحاً'
   );
 
   // Dynamic validation schemas
