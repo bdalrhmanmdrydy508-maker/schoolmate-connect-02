@@ -160,9 +160,10 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         }
 
         const redirectUrl = `${window.location.origin}/`;
+        const authEmail = identifierToAuthEmail(formData.email) || formData.email;
 
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
+          email: authEmail,
           password: formData.password,
           options: {
             emailRedirectTo: redirectUrl,
