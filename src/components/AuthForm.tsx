@@ -493,6 +493,74 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           </button>
         </div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>استرجاع كلمة المرور</DialogTitle>
+            <DialogDescription>
+              أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="forgotIdent" className="text-foreground">البريد الإلكتروني</Label>
+            <div className="relative">
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="forgotIdent"
+                type="email"
+                value={forgotIdent}
+                onChange={(e) => setForgotIdent(e.target.value)}
+                className="pr-10"
+                dir="ltr"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              ملاحظة: استرجاع كلمة المرور متاح للحسابات المسجّلة بالبريد الإلكتروني فقط.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setForgotOpen(false)}
+              disabled={forgotLoading}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              disabled={forgotLoading}
+              onClick={async () => {
+                const kind = detectIdentifierKind(forgotIdent);
+                if (kind !== 'email') {
+                  toast({ title: 'بريد غير صحيح', description: 'الرجاء إدخال بريد إلكتروني صحيح', variant: 'destructive' });
+                  return;
+                }
+                setForgotLoading(true);
+                const { error } = await supabase.auth.resetPasswordForEmail(
+                  forgotIdent.trim().toLowerCase(),
+                  { redirectTo: `${window.location.origin}/reset-password` }
+                );
+                setForgotLoading(false);
+                if (error) {
+                  toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+                  return;
+                }
+                toast({
+                  title: 'تم الإرسال',
+                  description: 'تحقق من بريدك الإلكتروني لرابط إعادة التعيين',
+                });
+                setForgotOpen(false);
+              }}
+            >
+              {forgotLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+              إرسال رابط الاسترجاع
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
