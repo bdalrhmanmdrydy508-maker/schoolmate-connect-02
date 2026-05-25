@@ -47,10 +47,21 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     secretCode: '',
   });
 
+  // Forgot password dialog state
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotIdent, setForgotIdent] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Identifier validator: email OR phone
+  const identifierField = z.string().refine(
+    (v) => detectIdentifierKind(v) !== 'invalid',
+    t.auth.identifierInvalid || 'أدخل بريداً إلكترونياً أو رقم هاتف صحيحاً'
+  );
+
   // Dynamic validation schemas
   const adminSchema = z.object({
     fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(6, t.settings.passwordTooShort),
     confirmPassword: z.string(),
     institutionName: z.string().min(2, t.settings.institution + ' required'),
@@ -62,7 +73,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
   const teacherSchema = z.object({
     fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(6, t.settings.passwordTooShort),
     confirmPassword: z.string(),
     subject: z.string().min(1, t.settings.subject + ' required'),
@@ -72,12 +83,12 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   });
 
   const adminLoginSchema = z.object({
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(1, t.auth.password + ' required'),
   });
 
   const teacherLoginSchema = z.object({
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(1, t.auth.password + ' required'),
   });
 
