@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, ShieldAlert, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, AtSign, Lock, User, Building, BookOpen, ShieldAlert, KeyRound, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { detectIdentifierKind, identifierToAuthEmail } from '@/lib/authIdentifier';
 import { z } from 'zod';
 
 // Secret code for admin access
@@ -45,10 +47,21 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
     secretCode: '',
   });
 
+  // Forgot password dialog state
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotIdent, setForgotIdent] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Identifier validator: email OR phone
+  const identifierField = z.string().refine(
+    (v) => detectIdentifierKind(v) !== 'invalid',
+    'أدخل بريداً إلكترونياً أو رقم هاتف صحيحاً'
+  );
+
   // Dynamic validation schemas
   const adminSchema = z.object({
     fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(6, t.settings.passwordTooShort),
     confirmPassword: z.string(),
     institutionName: z.string().min(2, t.settings.institution + ' required'),
@@ -60,7 +73,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
 
   const teacherSchema = z.object({
     fullName: z.string().min(3, t.auth.fullName + ' - 3 characters min'),
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(6, t.settings.passwordTooShort),
     confirmPassword: z.string(),
     subject: z.string().min(1, t.settings.subject + ' required'),
@@ -70,12 +83,12 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
   });
 
   const adminLoginSchema = z.object({
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(1, t.auth.password + ' required'),
   });
 
   const teacherLoginSchema = z.object({
-    email: z.string().email(t.auth.email + ' invalid'),
+    email: identifierField,
     password: z.string().min(1, t.auth.password + ' required'),
   });
 
@@ -106,9 +119,10 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           return;
         }
 
+        const authEmail = identifierToAuthEmail(formData.email) || formData.email;
         // Use the new role validation method
         const validation = await validateRoleForLogin(
-          formData.email,
+          authEmail,
           formData.password,
           role
         );
@@ -146,9 +160,10 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
         }
 
         const redirectUrl = `${window.location.origin}/`;
+        const authEmail = identifierToAuthEmail(formData.email) || formData.email;
 
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
+          email: authEmail,
           password: formData.password,
           options: {
             emailRedirectTo: redirectUrl,
@@ -193,7 +208,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               .insert({
                 user_id: authData.user.id,
                 full_name: formData.fullName,
-                email: formData.email,
+                email: authEmail,
                 institution_name: formData.institutionName,
               });
 
@@ -207,7 +222,7 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               .insert({
                 user_id: authData.user.id,
                 full_name: formData.fullName,
-                email: formData.email,
+                email: authEmail,
                 subject: formData.subject,
                 teacher_id: authData.user.id.substring(0, 8).toUpperCase(),
                 status: 'pending', // Requires admin approval
@@ -314,16 +329,21 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">{t.auth.email}</Label>
+            <Label htmlFor="email" className="text-foreground">البريد الإلكتروني أو رقم الهاتف</Label>
             <div className="relative">
-              <Mail className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+              {(() => {
+                const k = detectIdentifierKind(formData.email);
+                const Icon = k === 'phone' ? Phone : k === 'email' ? Mail : AtSign;
+                return <Icon className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />;
+              })()}
               <Input
                 id="email"
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="username"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 className={`${isRTL ? 'pr-10' : 'pl-10'} bg-background/50`}
-                placeholder="example@email.com"
                 dir="ltr"
               />
             </div>
@@ -352,6 +372,17 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               </button>
             </div>
             {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
+            {isLogin && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setForgotIdent(formData.email); setForgotOpen(true); }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  نسيت كلمة المرور؟
+                </button>
+              </div>
+            )}
           </div>
 
         {/* Secret Code Field - Required for Admin signup only */}
@@ -462,6 +493,74 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           </button>
         </div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>استرجاع كلمة المرور</DialogTitle>
+            <DialogDescription>
+              أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="forgotIdent" className="text-foreground">البريد الإلكتروني</Label>
+            <div className="relative">
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="forgotIdent"
+                type="email"
+                value={forgotIdent}
+                onChange={(e) => setForgotIdent(e.target.value)}
+                className="pr-10"
+                dir="ltr"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              ملاحظة: استرجاع كلمة المرور متاح للحسابات المسجّلة بالبريد الإلكتروني فقط.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setForgotOpen(false)}
+              disabled={forgotLoading}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="button"
+              disabled={forgotLoading}
+              onClick={async () => {
+                const kind = detectIdentifierKind(forgotIdent);
+                if (kind !== 'email') {
+                  toast({ title: 'بريد غير صحيح', description: 'الرجاء إدخال بريد إلكتروني صحيح', variant: 'destructive' });
+                  return;
+                }
+                setForgotLoading(true);
+                const { error } = await supabase.auth.resetPasswordForEmail(
+                  forgotIdent.trim().toLowerCase(),
+                  { redirectTo: `${window.location.origin}/reset-password` }
+                );
+                setForgotLoading(false);
+                if (error) {
+                  toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
+                  return;
+                }
+                toast({
+                  title: 'تم الإرسال',
+                  description: 'تحقق من بريدك الإلكتروني لرابط إعادة التعيين',
+                });
+                setForgotOpen(false);
+              }}
+            >
+              {forgotLoading && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
+              إرسال رابط الاسترجاع
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

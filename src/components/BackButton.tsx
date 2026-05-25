@@ -30,9 +30,9 @@ export const BackButton = ({ onClick, inline = false, label, className = '' }: B
       size="sm"
       onClick={onClick}
       aria-label={text}
-      className={`gap-2 h-10 px-3 rounded-lg border border-border bg-card text-foreground hover:bg-accent shadow-sm ${className}`}
+      className={`gap-2 h-10 px-4 rounded-lg border border-border/80 bg-card/80 text-foreground hover:bg-accent hover:text-accent-foreground hover:border-border transition-colors shadow-sm ${className}`}
     >
-      <Arrow className="w-5 h-5" />
+      <Arrow className="w-4 h-4 opacity-80" />
       <span className="text-sm font-medium">{text}</span>
     </Button>
   );
