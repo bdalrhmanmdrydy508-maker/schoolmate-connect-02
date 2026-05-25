@@ -119,9 +119,10 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
           return;
         }
 
+        const authEmail = identifierToAuthEmail(formData.email) || formData.email;
         // Use the new role validation method
         const validation = await validateRoleForLogin(
-          formData.email,
+          authEmail,
           formData.password,
           role
         );
