@@ -372,6 +372,17 @@ export const AuthForm = ({ role, onBack }: AuthFormProps) => {
               </button>
             </div>
             {errors.password && <p className="text-destructive text-sm">{errors.password}</p>}
+            {isLogin && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setForgotIdent(formData.email); setForgotOpen(true); }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  نسيت كلمة المرور؟
+                </button>
+              </div>
+            )}
           </div>
 
         {/* Secret Code Field - Required for Admin signup only */}
