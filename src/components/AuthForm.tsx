@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User, Building, BookOpen, ShieldAlert, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, AtSign, Lock, User, Building, BookOpen, ShieldAlert, KeyRound, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { detectIdentifierKind, identifierToAuthEmail, isPhoneAuthEmail } from '@/lib/authIdentifier';
 import { z } from 'zod';
 
 // Secret code for admin access
