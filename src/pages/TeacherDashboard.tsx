@@ -79,6 +79,11 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
+  const [showFileSourceDialog, setShowFileSourceDialog] = useState(false);
+  const [showMyFilesPicker, setShowMyFilesPicker] = useState(false);
+  const [myFiles, setMyFiles] = useState<{ id: string; file_name: string; file_url: string }[]>([]);
+  const [loadingMyFiles, setLoadingMyFiles] = useState(false);
+  const [selectedExistingFile, setSelectedExistingFile] = useState<{ file_name: string; file_url: string } | null>(null);
   const [lessonType, setLessonType] = useState('lesson');
   const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
   const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
@@ -234,6 +239,19 @@ const TeacherDashboard = () => {
     }
   };
 
+  const openMyFilesPicker = async () => {
+    if (!profile) return;
+    setShowFileSourceDialog(false);
+    setShowMyFilesPicker(true);
+    setLoadingMyFiles(true);
+    const { data } = await supabase
+      .from('teacher_files')
+      .select('id, file_name, file_url')
+      .eq('teacher_id', profile.id)
+      .order('created_at', { ascending: false });
+    setMyFiles(data || []);
+    setLoadingMyFiles(false);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -251,6 +269,8 @@ const TeacherDashboard = () => {
         return;
       }
       setLessonFile(file);
+      setSelectedExistingFile(null);
+      setShowFileSourceDialog(false);
     }
   };
 
@@ -272,8 +292,11 @@ const TeacherDashboard = () => {
     let fileUrl: string | null = null;
 
     try {
-      // Upload file if provided - use user_id for RLS compliance
-      if (lessonFile) {
+      // Reuse an existing file from "ملفاتي" without re-uploading
+      if (selectedExistingFile) {
+        fileUrl = selectedExistingFile.file_url;
+        setUploadProgress(60);
+      } else if (lessonFile) {
         setUploadProgress(20);
         const fileExt = lessonFile.name.split('.').pop()?.toLowerCase();
         const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -333,7 +356,7 @@ const TeacherDashboard = () => {
 
       if (error) {
         // Rollback: delete uploaded file if lesson insert fails
-        if (fileUrl) {
+        if (fileUrl && lessonFile && !selectedExistingFile) {
           const filePath = fileUrl.split('/teacher-files/').pop();
           if (filePath) {
             await supabase.storage.from('teacher-files').remove([filePath]);
@@ -351,6 +374,7 @@ const TeacherDashboard = () => {
       setLessonDate('');
       setLessonDuration('');
       setLessonFile(null);
+      setSelectedExistingFile(null);
       setLessonType('lesson');
       setHomeworkSubmissionDate('');
       setHomeworkReturnDate('');
@@ -525,29 +549,105 @@ const TeacherDashboard = () => {
                   <FileUp className="w-5 h-5" />
                   {t.teacher.attachFile}
                 </Label>
-                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="lesson-file"
-                  />
-                  <label htmlFor="lesson-file" className="cursor-pointer flex flex-col items-center gap-2">
-                    <FileUp className="w-10 h-10 text-muted-foreground" />
-                    {lessonFile ? (
-                      <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
-                    )}
-                  </label>
-                </div>
-                {lessonFile && (
-                  <Button variant="ghost" size="sm" onClick={() => setLessonFile(null)} className="text-destructive">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="lesson-file"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowFileSourceDialog(true)}
+                  className="w-full border-2 border-dashed border-border rounded-xl p-6 text-center flex flex-col items-center gap-2 hover:border-primary/60 transition-colors"
+                >
+                  <FileUp className="w-10 h-10 text-muted-foreground" />
+                  {lessonFile ? (
+                    <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
+                  ) : selectedExistingFile ? (
+                    <span className="text-sm font-medium text-primary">{selectedExistingFile.file_name}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
+                  )}
+                </button>
+                {(lessonFile || selectedExistingFile) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setLessonFile(null); setSelectedExistingFile(null); }}
+                    className="text-destructive"
+                  >
                     {t.common.delete}
                   </Button>
                 )}
               </div>
+
+              {/* File source dialog */}
+              <Dialog open={showFileSourceDialog} onOpenChange={setShowFileSourceDialog}>
+                <DialogContent className="max-w-sm rounded-2xl" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center">اختر مصدر الملف</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-3 pt-2">
+                    <label
+                      htmlFor="lesson-file"
+                      className="cursor-pointer flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:bg-accent transition-colors"
+                    >
+                      <Upload className="w-6 h-6 text-primary" />
+                      <div className="text-right">
+                        <p className="font-semibold">من الهاتف</p>
+                        <p className="text-xs text-muted-foreground">اختيار ملف جديد من جهازك</p>
+                      </div>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={openMyFilesPicker}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:bg-accent transition-colors text-right"
+                    >
+                      <FolderOpen className="w-6 h-6 text-primary" />
+                      <div>
+                        <p className="font-semibold">من التطبيق</p>
+                        <p className="text-xs text-muted-foreground">اختيار ملف موجود في ملفاتي</p>
+                      </div>
+                    </button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* My files picker */}
+              <Dialog open={showMyFilesPicker} onOpenChange={setShowMyFilesPicker}>
+                <DialogContent className="max-w-md rounded-2xl" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center">ملفاتي</DialogTitle>
+                  </DialogHeader>
+                  <div className="max-h-[60vh] overflow-y-auto space-y-2">
+                    {loadingMyFiles ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    ) : myFiles.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-8">لا توجد ملفات محفوظة</p>
+                    ) : (
+                      myFiles.map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedExistingFile({ file_name: f.file_name, file_url: f.file_url });
+                            setLessonFile(null);
+                            setShowMyFilesPicker(false);
+                          }}
+                          className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3 hover:bg-accent transition-colors text-right"
+                        >
+                          <FileText className="w-5 h-5 text-primary shrink-0" />
+                          <span className="text-sm truncate">{f.file_name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
 
               {isUploading && (
                 <div className="space-y-2">
