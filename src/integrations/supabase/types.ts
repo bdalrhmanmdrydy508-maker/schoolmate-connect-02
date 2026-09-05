@@ -146,8 +146,30 @@ export type Database = {
           },
         ]
       }
+      lesson_types: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       lessons: {
         Row: {
+          branch_id: string | null
           created_at: string
           description: string | null
           duration: string | null
@@ -157,11 +179,14 @@ export type Database = {
           id: string
           lesson_date: string
           lesson_type: string | null
+          level_id: string | null
           section_id: string
+          subject_id: string | null
           teacher_id: string
           title: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           description?: string | null
           duration?: string | null
@@ -171,11 +196,14 @@ export type Database = {
           id?: string
           lesson_date: string
           lesson_type?: string | null
+          level_id?: string | null
           section_id: string
+          subject_id?: string | null
           teacher_id: string
           title: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           description?: string | null
           duration?: string | null
@@ -185,16 +213,39 @@ export type Database = {
           id?: string
           lesson_date?: string
           lesson_type?: string | null
+          level_id?: string | null
           section_id?: string
+          subject_id?: string | null
           teacher_id?: string
           title?: string
         }
         Relationships: [
           {
+            foreignKeyName: "lessons_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lessons_section_id_fkey"
             columns: ["section_id"]
             isOneToOne: false
             referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
           {
@@ -384,23 +435,83 @@ export type Database = {
           },
         ]
       }
-      subjects: {
+      subject_lesson_types: {
         Row: {
           created_at: string
           id: string
-          name: string
+          lesson_type_id: string
+          order_index: number
+          subject_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          name: string
+          lesson_type_id: string
+          order_index?: number
+          subject_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          lesson_type_id?: string
+          order_index?: number
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_lesson_types_lesson_type_id_fkey"
+            columns: ["lesson_type_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_lesson_types_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          id: string
+          level_id: string | null
+          name: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          level_id?: string | null
+          name: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          level_id?: string | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subjects_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_assignments: {
         Row: {
@@ -501,45 +612,76 @@ export type Database = {
       }
       teacher_profiles: {
         Row: {
+          branch_id: string | null
           created_at: string
           email: string | null
           full_name: string
           id: string
           last_profile_update: string | null
+          level_id: string | null
           phone: string | null
           status: string | null
           subject: string
+          subject_id: string | null
           teacher_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
           id?: string
           last_profile_update?: string | null
+          level_id?: string | null
           phone?: string | null
           status?: string | null
           subject: string
+          subject_id?: string | null
           teacher_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          branch_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
           id?: string
           last_profile_update?: string | null
+          level_id?: string | null
           phone?: string | null
           status?: string | null
           subject?: string
+          subject_id?: string | null
           teacher_id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teacher_profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_profiles_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_profiles_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       teacher_programs: {
         Row: {
