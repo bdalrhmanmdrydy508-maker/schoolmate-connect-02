@@ -239,6 +239,19 @@ const TeacherDashboard = () => {
     }
   };
 
+  const openMyFilesPicker = async () => {
+    if (!profile) return;
+    setShowFileSourceDialog(false);
+    setShowMyFilesPicker(true);
+    setLoadingMyFiles(true);
+    const { data } = await supabase
+      .from('teacher_files')
+      .select('id, file_name, file_url')
+      .eq('teacher_id', profile.id)
+      .order('created_at', { ascending: false });
+    setMyFiles(data || []);
+    setLoadingMyFiles(false);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
