@@ -549,29 +549,105 @@ const TeacherDashboard = () => {
                   <FileUp className="w-5 h-5" />
                   {t.teacher.attachFile}
                 </Label>
-                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="lesson-file"
-                  />
-                  <label htmlFor="lesson-file" className="cursor-pointer flex flex-col items-center gap-2">
-                    <FileUp className="w-10 h-10 text-muted-foreground" />
-                    {lessonFile ? (
-                      <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
-                    )}
-                  </label>
-                </div>
-                {lessonFile && (
-                  <Button variant="ghost" size="sm" onClick={() => setLessonFile(null)} className="text-destructive">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="lesson-file"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowFileSourceDialog(true)}
+                  className="w-full border-2 border-dashed border-border rounded-xl p-6 text-center flex flex-col items-center gap-2 hover:border-primary/60 transition-colors"
+                >
+                  <FileUp className="w-10 h-10 text-muted-foreground" />
+                  {lessonFile ? (
+                    <span className="text-sm font-medium text-primary">{lessonFile.name}</span>
+                  ) : selectedExistingFile ? (
+                    <span className="text-sm font-medium text-primary">{selectedExistingFile.file_name}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t.teacher.supportedFormats}</span>
+                  )}
+                </button>
+                {(lessonFile || selectedExistingFile) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setLessonFile(null); setSelectedExistingFile(null); }}
+                    className="text-destructive"
+                  >
                     {t.common.delete}
                   </Button>
                 )}
               </div>
+
+              {/* File source dialog */}
+              <Dialog open={showFileSourceDialog} onOpenChange={setShowFileSourceDialog}>
+                <DialogContent className="max-w-sm rounded-2xl" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center">اختر مصدر الملف</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-3 pt-2">
+                    <label
+                      htmlFor="lesson-file"
+                      className="cursor-pointer flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:bg-accent transition-colors"
+                    >
+                      <Upload className="w-6 h-6 text-primary" />
+                      <div className="text-right">
+                        <p className="font-semibold">من الهاتف</p>
+                        <p className="text-xs text-muted-foreground">اختيار ملف جديد من جهازك</p>
+                      </div>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={openMyFilesPicker}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 hover:bg-accent transition-colors text-right"
+                    >
+                      <FolderOpen className="w-6 h-6 text-primary" />
+                      <div>
+                        <p className="font-semibold">من التطبيق</p>
+                        <p className="text-xs text-muted-foreground">اختيار ملف موجود في ملفاتي</p>
+                      </div>
+                    </button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* My files picker */}
+              <Dialog open={showMyFilesPicker} onOpenChange={setShowMyFilesPicker}>
+                <DialogContent className="max-w-md rounded-2xl" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center">ملفاتي</DialogTitle>
+                  </DialogHeader>
+                  <div className="max-h-[60vh] overflow-y-auto space-y-2">
+                    {loadingMyFiles ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    ) : myFiles.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-8">لا توجد ملفات محفوظة</p>
+                    ) : (
+                      myFiles.map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedExistingFile({ file_name: f.file_name, file_url: f.file_url });
+                            setLessonFile(null);
+                            setShowMyFilesPicker(false);
+                          }}
+                          className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-3 hover:bg-accent transition-colors text-right"
+                        >
+                          <FileText className="w-5 h-5 text-primary shrink-0" />
+                          <span className="text-sm truncate">{f.file_name}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
 
               {isUploading && (
                 <div className="space-y-2">
