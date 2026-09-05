@@ -356,7 +356,7 @@ const TeacherDashboard = () => {
 
       if (error) {
         // Rollback: delete uploaded file if lesson insert fails
-        if (fileUrl) {
+        if (fileUrl && lessonFile && !selectedExistingFile) {
           const filePath = fileUrl.split('/teacher-files/').pop();
           if (filePath) {
             await supabase.storage.from('teacher-files').remove([filePath]);
