@@ -374,6 +374,7 @@ const TeacherDashboard = () => {
       setLessonDate('');
       setLessonDuration('');
       setLessonFile(null);
+      setSelectedExistingFile(null);
       setLessonType('lesson');
       setHomeworkSubmissionDate('');
       setHomeworkReturnDate('');
