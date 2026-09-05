@@ -79,6 +79,11 @@ const TeacherDashboard = () => {
   const [lessonDate, setLessonDate] = useState('');
   const [lessonDuration, setLessonDuration] = useState('');
   const [lessonFile, setLessonFile] = useState<File | null>(null);
+  const [showFileSourceDialog, setShowFileSourceDialog] = useState(false);
+  const [showMyFilesPicker, setShowMyFilesPicker] = useState(false);
+  const [myFiles, setMyFiles] = useState<{ id: string; file_name: string; file_url: string }[]>([]);
+  const [loadingMyFiles, setLoadingMyFiles] = useState(false);
+  const [selectedExistingFile, setSelectedExistingFile] = useState<{ file_name: string; file_url: string } | null>(null);
   const [lessonType, setLessonType] = useState('lesson');
   const [homeworkSubmissionDate, setHomeworkSubmissionDate] = useState('');
   const [homeworkReturnDate, setHomeworkReturnDate] = useState('');
