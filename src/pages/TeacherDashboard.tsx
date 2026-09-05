@@ -269,6 +269,8 @@ const TeacherDashboard = () => {
         return;
       }
       setLessonFile(file);
+      setSelectedExistingFile(null);
+      setShowFileSourceDialog(false);
     }
   };
 
