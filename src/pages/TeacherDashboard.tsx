@@ -292,8 +292,11 @@ const TeacherDashboard = () => {
     let fileUrl: string | null = null;
 
     try {
-      // Upload file if provided - use user_id for RLS compliance
-      if (lessonFile) {
+      // Reuse an existing file from "ملفاتي" without re-uploading
+      if (selectedExistingFile) {
+        fileUrl = selectedExistingFile.file_url;
+        setUploadProgress(60);
+      } else if (lessonFile) {
         setUploadProgress(20);
         const fileExt = lessonFile.name.split('.').pop()?.toLowerCase();
         const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
